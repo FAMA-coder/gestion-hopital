@@ -1,0 +1,44 @@
+{
+  "name": "Gestion Hospitaliere",
+  "short_name": "GestHopital",
+  "description": "Application de gestion complete pour hopital : patients, consultations, urgences, pharmacie, laboratoire, facturation et paiements.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#109687",
+  "theme_color": "#109687",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tableau de bord",
+      "short_name": "Accueil",
+      "url": "./index.html#dashboard"
+    },
+    {
+      "name": "Admissions",
+      "short_name": "Admissions",
+      "url": "./index.html#admissions"
+    }
+  ]
+}
