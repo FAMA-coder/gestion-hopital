@@ -14,8 +14,8 @@
 //                 FIREBASE_API_KEY (cle Web API du projet).
 // ============================================================
 const APP_CONFIG = {
-    MODE: 'local',
-    BACKEND: 'supabase',   // 'supabase' | 'firebase'
+    MODE: 'cloud',
+    BACKEND: 'firebase',   // 'supabase' | 'firebase'
 
     // ----- Supabase -----
     // Exemple : 'https://abcd1234.supabase.co'
@@ -27,9 +27,9 @@ const APP_CONFIG = {
 
     // ----- Firebase -----
     // Exemple : 'https://monprojet-default-rtdb.firebaseio.com'
-    FIREBASE_DATABASE_URL: '',
+    FIREBASE_DATABASE_URL: 'https://my-gest-hopital-default-rtdb.firebaseio.com',
     // Cle Web API (Parametres du projet -> Accompagnement des applications -> Cle Web API).
-    FIREBASE_API_KEY: ''
+    FIREBASE_API_KEY: 'AIzaSyDHBNtIEWnDGjJ2R_o6lyHMu6dztBYCvQc'
 };
 
 window.APP_CONFIG = APP_CONFIG;
