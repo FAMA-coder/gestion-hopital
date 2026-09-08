@@ -121,7 +121,9 @@ const Auth = {
             role: user.role,
             serviceId: user.serviceId,
             maitre: user.maitre === true,
-            permissions: user.permissions || null
+            tenantId: (window && window.Tenant) ? Tenant.get() : null,
+            permissions: user.permissions || null,
+            supervision: false
         };
 
         localStorage.setItem(this.SESSION_KEY, JSON.stringify(this.currentUser));
@@ -136,12 +138,51 @@ const Auth = {
         localStorage.removeItem(this.SESSION_KEY);
     },
 
+    // Session programmee (supervision par le compte ADMIN global).
+    // Utilise les memes permissions qu'un administrateur d'etablissement.
+    async setSupervisionSession(tid, nomHopital) {
+        const hopital = (nomHopital || 'Etablissement');
+        this.currentUser = {
+            id: 'superglobal',
+            nomUtilisateur: (window.APP_CONFIG || {}).GLOBAL_ADMIN.login || 'FAMA',
+            nomComplet: 'ADMIN global - ' + hopital,
+            role: 'admin',
+            serviceId: null,
+            maitre: true,
+            tenantId: tid,
+            permissions: null,
+            supervision: true
+        };
+        localStorage.setItem(this.SESSION_KEY, JSON.stringify(this.currentUser));
+        await this.refreshPermissions();
+        return this.currentUser;
+    },
+
+    endSupervision() {
+        this.log('Fin surveillance');
+        this.currentUser = null;
+        localStorage.removeItem(this.SESSION_KEY);
+    },
+
+    estSupervision() {
+        return !!(this.currentUser && this.currentUser.supervision === true);
+    },
+
     async restoreSession() {
         const data = localStorage.getItem(this.SESSION_KEY);
         if (data) {
             try {
                 this.currentUser = JSON.parse(data);
                 if (this.currentUser && this.currentUser.id && this.currentUser.role) {
+                    // Etablissement de la session : indispensable pour que
+                    // toutes les lectures de donnees ciblent le bon tenant.
+                    if (this.currentUser.tenantId && window.Tenant) {
+                        Tenant.set(this.currentUser.tenantId);
+                    }
+                    if (this.currentUser.supervision === true) {
+                        await this.refreshPermissions();
+                        return true;
+                    }
                     // Rafraichit les infos (et le drapeau maitre) depuis la base
                     // pour les sessions eventuellement enregistrees avant.
                     try {

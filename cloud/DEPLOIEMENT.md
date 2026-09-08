@@ -134,6 +134,51 @@ Alternatives : **Vercel** (`vercel` CLI ou import dossier), **Cloudflare Pages**
 Le compte **FAMA** est invisible et intouchable par tout autre compte ; lui seul
 peut saisir/modifier les informations de l'hôpital dans **Paramètres → Hôpital**.
 
+## Écran de démarrage et console ADMIN global
+
+Au démarrage, l'application affiche **trois boutons** :
+
+| Bouton                  | Rôle                                                                 |
+|-------------------------|----------------------------------------------------------------------|
+| **Compte utilisateur**  | Connexion d'un utilisateur d'un établissement (avec choix de l'établissement en mode cloud). |
+| **COMPTE ADMIN (global)** | Connexion au **compte maître** (`FAMA` / `aminatN1FA@`) puis console de gestion de tous les établissements. |
+| **Quitter**             | Ferme l'onglet / la fenêtre.                                         |
+
+### Multi-établissements (mode cloud)
+
+Une seule base centrale héberge **plusieurs hôpitaux / cliniques**. Les données
+de chaque établissement sont isolées sous `/records/{id_etablissement}/...` et le
+registre des établissements se trouve sous `/master/hopitaux/...` :
+
+```
+/master/hopitaux/{id}        ->  nom, ville, statut (actif / bloque), ...
+/records/{id}/patients/...    ->  données propre à l'établissement
+```
+
+- Au premier lancement, l'ancienne structure monobloc (si toutes les données
+  étaient sous `/records/...`) est **migrée automatiquement** vers le premier
+  établissement (`t1`) créé pour l'occasion.
+- **Créer un établissement** : COMPTE ADMIN (global) → bouton **Nouvel établissement**
+  (nom + ville). Un nouvel identifiant `h...` est généré.
+- **Bloquer / débloquer** : le bouton « Bloquer » passe l'établissement en
+  `statut: bloque` : plus aucun utilisateur de cet établissement ne peut se
+  connecter (message explicite au login, et l'établissement apparaît « (bloque) »
+  dans le sélecteur).
+- **Superviser** : le bouton « Superviser » ouvre l'application *en tant que*
+  l'établissement choisi (rôle admin global) sans mot de passe de l'établissement ;
+  une barre **« Sortir de la supervision »** ramène à la console ADMIN.
+- **Modifier / Supprimer** : renommer/ville, ou suppression définitive de
+  l'établissement et de toutes ses données (avec confirmation).
+
+### Comptes de démonstration des établissements
+
+| Établissement (id)             | Comptes disponibles                                   |
+|--------------------------------|-------------------------------------------------------|
+| `t1` — Hopital Central de Kinshasa | `admin` / `admin123` (admin), `dr_mukendi` / `med123`, `infirmier1` / `inf123`, `pharmacie` / `pharm123` |
+| tout nouvel établissement      | Premier compteur à créer dans Paramètres → Utilisateurs (le seed interne crée `admin`/`admin123` s'il est vide). |
+
+> Les comptes d'un établissement ne voient que ses propres données.
+
 ## Règles de gestion importantes
 
 - **Une seule source de vérité** : les données sont centralisées. Dernière

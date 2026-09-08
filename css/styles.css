@@ -1032,3 +1032,77 @@ html { scrollbar-width: auto; scrollbar-color: #c1c1c1 transparent; }
 /* ===== SHIFT/GARDE TABLE ===== */
 .garde-grid { display: grid; gap: 8px; }
 
+/* ===== ECRAN DE DEMARRAGE ===== */
+.launch-actions { display: flex; flex-direction: column; gap: 12px; }
+
+.launch-card .btn { justify-content: center; }
+
+.btn-admin {
+    background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(74, 20, 140, 0.35);
+}
+.btn-admin:hover { background: linear-gradient(135deg, #3a0d75 0%, #6a1591 100%); }
+
+.login-logo-admin { color: #7b1fa2; }
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 13px;
+    margin-top: 12px;
+    text-decoration: underline;
+}
+.btn-link:hover { color: var(--primary-dark); }
+
+.login-form select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: var(--card-bg);
+    color: var(--text);
+}
+.login-form select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* ===== MODE ADMIN GLOBAL ===== */
+body.master-mode #sidebar { display: none; }
+body.master-mode .main-content { margin: 0; }
+
+.user-hospital {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
+}
+
+.btn-exit-sup { color: #b00020; font-weight: 700; }
+.btn-exit-sup:hover { background: var(--danger-light); color: #b00020; }
+
+.admin-console .ga-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 150px;
+    padding: 14px 18px;
+    margin-bottom: 0;
+}
+.admin-console .ga-stat b { font-size: 24px; }
+.admin-console .ga-stat span { font-size: 12px; color: var(--text-secondary); }
+
+.ga-table { min-width: 720px; }
+
+@media (max-width: 768px) {
+    .admin-console .ga-stat { min-width: 130px; flex: 1 1 130px; }
+    .admin-console .card-header h3 small { display: block; }
+}
+

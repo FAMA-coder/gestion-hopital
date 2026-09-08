@@ -9,6 +9,7 @@ const SCRIPT_FILES = [
     'js/core/logger.js',
     'js/config.js',
     'js/remote_db.js',
+    'js/tenant.js',
     'js/db.js',
     'js/auth.js',
     'js/ui.js',
@@ -44,7 +45,8 @@ const SCRIPT_FILES = [
     'js/modules/reporting.js',
     'js/modules/parametres.js',
     'js/modules/aide.js',
-    'js/modules/sauvegarde.js'
+    'js/modules/sauvegarde.js',
+    'js/modules/global_admin.js'
 ];
 
 function loadScript(src) {
@@ -88,13 +90,23 @@ async function runApp() {
         registerServiceWorker();
 
         if (await Auth.restoreSession()) {
-            showApp();
+            if (Auth.estSupervision()) {
+                showApp();
+            } else {
+                await Init.ensureSeed();
+                showApp();
+            }
+        } else if (window.GlobalAdmin && GlobalAdmin.isActive()) {
+            GlobalAdmin.open();
         } else {
-            showLogin();
+            showLaunch();
         }
 
+        setupLaunchHandler();
         setupLoginHandler();
+        setupGlobalLoginHandler();
         setupLogoutHandler();
+        setupExitSupervisionHandler();
         setupModalClose();
         setupDateDisplay();
         setupMobileNav();
@@ -104,20 +116,102 @@ async function runApp() {
     }
 }
 
-function showLogin() {
-    document.getElementById('login-screen').style.display = 'flex';
+// --- Ecran de demarrage : 3 entrees ---
+function showLaunch() {
+    document.body.classList.remove('master-mode');
     document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('launch-screen').style.display = 'flex';
+}
+
+function showUserLogin() {
+    document.body.classList.remove('master-mode');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('launch-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('panel-user-login').style.display = '';
+    document.getElementById('panel-global-login').style.display = 'none';
+    loadHospitalSelect();
     applyBranding();
+}
+
+function showGlobalLogin() {
+    document.body.classList.remove('master-mode');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('launch-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('panel-user-login').style.display = 'none';
+    document.getElementById('panel-global-login').style.display = '';
+    document.getElementById('global-login-user').focus();
+}
+
+function quitApp() {
+    try { window.close(); } catch (e) { /* certains navigateurs l'ignorent */ }
+    setTimeout(() => {
+        UI.toast('Fermez cet onglet / cette fenetre pour quitter l\'application.', 'info');
+    }, 250);
+}
+
+function setupLaunchHandler() {
+    document.getElementById('launch-user').addEventListener('click', showUserLogin);
+    document.getElementById('launch-admin').addEventListener('click', () => {
+        if (window.GlobalAdmin && GlobalAdmin.isActive()) {
+            GlobalAdmin.open();
+        } else {
+            showGlobalLogin();
+        }
+    });
+    document.getElementById('launch-quit').addEventListener('click', quitApp);
+    document.getElementById('btn-user-back').addEventListener('click', showLaunch);
+    document.getElementById('btn-global-back').addEventListener('click', showLaunch);
+}
+
+// Liste des etablissements dans le formulaire de connexion utilisateur.
+async function loadHospitalSelect() {
+    const select = document.getElementById('login-hopital');
+    const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
+    const group = document.getElementById('login-hopital-group');
+    if (!isCloud) {
+        // Mode local (IndexedDB) : pas de registre central, pas de choix d'etablissement.
+        if (select) { select.required = false; select.style.display = 'none'; }
+        if (group) { const lbl = group.querySelector('label'); if (lbl) lbl.style.display = 'none'; }
+        return;
+    }
+    if (select) { select.required = true; select.style.display = ''; }
+    if (group) { const lbl = group.querySelector('label'); if (lbl) lbl.style.display = ''; }
+    const current = (window.Tenant) ? Tenant.get() : null;
+    let list = [];
+    try {
+        list = await Tenant.list();
+    } catch (e) { /* registre indisponible */ }
+    select.innerHTML = '<option value="">— Selectionner l\'etablissement —</option>';
+    list.forEach(h => {
+        const blocked = h.statut === 'bloque';
+        const opt = document.createElement('option');
+        opt.value = h.id;
+        opt.textContent = (h.nom || h.id) + (h.ville ? ' — ' + h.ville : '') + (blocked ? ' (bloque)' : '');
+        opt.disabled = blocked;
+        select.appendChild(opt);
+    });
+    if (current && list.some(h => h.id === current)) select.value = current;
 }
 
 async function showApp() {
     document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('launch-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+    document.body.classList.remove('master-mode');
+    document.getElementById('sidebar').classList.remove('mobile-open');
 
     const user = Auth.currentUser;
     document.getElementById('user-name').textContent = user.nomComplet;
     document.getElementById('user-role').textContent = Auth.getRoleLabel();
     document.getElementById('user-avatar').textContent = user.nomComplet.charAt(0).toUpperCase();
+    document.getElementById('btn-exit-supervision').hidden = !Auth.estSupervision();
+
+    const hopital = await Meta.getHopital();
+    const hid = document.getElementById('user-hospital');
+    if (hid) hid.textContent = (hopital && hopital.nom) ? hopital.nom : '';
 
     applyBranding();
     setupNavPermissions();
@@ -150,13 +244,35 @@ function setupLoginHandler() {
         const submitBtn = document.getElementById('login-submit');
         const original = submitBtn.innerHTML;
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Connexion...';
+        const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
+        const tid = document.getElementById('login-hopital').value;
+        if (isCloud && !tid) {
+            errorEl.textContent = 'Selectionnez l\'etablissement auquel vous etes rattache(e).';
+            errorEl.style.display = 'block';
+            return;
+        }
 
         try {
+            // Un etablissement bloque par le compte ADMIN global ne permet
+            // plus la connexion de ses utilisateurs.
+            if (isCloud) {
+                const h = await Tenant.getOne(tid);
+                if (h && h.statut === 'bloque') {
+                    errorEl.textContent = 'Cet etablissement est bloque par l\'administration. Contactez l\'administration pour son deblocage.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                Tenant.set(tid);
+                Cache.invalidateAll();
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Connexion...';
+
             const result = await Auth.login(username, password);
             if (result.success) {
                 errorEl.style.display = 'none';
+                await Init.ensureSeed();
                 showApp();
             } else {
                 errorEl.textContent = result.message;
@@ -170,13 +286,53 @@ function setupLoginHandler() {
 
 }
 
+// Connexion au compte ADMIN (global) : identite maître + hash SHA-256.
+function setupGlobalLoginHandler() {
+    document.getElementById('global-login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('global-login-user').value.trim();
+        const password = document.getElementById('global-login-pass').value;
+        const errorEl = document.getElementById('global-login-error');
+        const submitBtn = document.getElementById('global-login-submit');
+        const original = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Verification...';
+        try {
+            const result = await GlobalAdmin.login(username, password);
+            if (result.success) {
+                errorEl.style.display = 'none';
+                document.getElementById('login-screen').style.display = 'none';
+                await GlobalAdmin.open();
+            } else {
+                errorEl.textContent = result.message;
+                errorEl.style.display = 'block';
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = original;
+        }
+    });
+}
+
 function setupLogoutHandler() {
     document.getElementById('btn-logout').addEventListener('click', () => {
         Auth.logout();
         State.clear();
         Cache.invalidateAll();
         window.location.hash = '';
-        showLogin();
+        showLaunch();
+    });
+}
+
+function setupExitSupervisionHandler() {
+    document.getElementById('btn-exit-supervision').addEventListener('click', async () => {
+        Auth.endSupervision();
+        State.clear();
+        Cache.invalidateAll();
+        window.location.hash = '';
+        document.getElementById('btn-exit-supervision').hidden = true;
+        await GlobalAdmin.open();
     });
 }
 

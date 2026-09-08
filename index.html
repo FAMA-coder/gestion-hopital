@@ -16,27 +16,72 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div id="login-screen" class="login-screen">
-        <div class="login-card">
+    <div id="launch-screen" class="login-screen" style="display:flex;">
+        <div class="login-card launch-card">
             <div class="login-header">
                 <div class="login-logo">&#9764;</div>
                 <h1>Gestion Hospitaliere</h1>
-                <p>Systeme de gestion hospitaliere integre</p>
+                <p>Plateforme de gestion des etablissements de sante</p>
             </div>
-            <form id="login-form" class="login-form">
-                <div class="form-group">
-                    <label for="login-user">Utilisateur</label>
-                    <input type="text" id="login-user" placeholder="Nom d'utilisateur" required>
-                </div>
-                <div class="form-group">
-                    <label for="login-pass">Mot de passe</label>
-                    <input type="password" id="login-pass" placeholder="Mot de passe" required>
-                </div>
-                <div id="login-error" class="login-error" style="display:none;"></div>
-                <button type="submit" id="login-submit" class="btn btn-primary btn-block">Se connecter</button>
-            </form>
+            <div class="launch-actions">
+                <button id="launch-user" class="btn btn-primary btn-block">Compte utilisateur</button>
+                <button id="launch-admin" class="btn btn-admin btn-block">COMPTE ADMIN (global)</button>
+                <button id="launch-quit" class="btn btn-outline btn-block">Quitter</button>
+            </div>
             <div class="login-footer">
-                <small>&nbsp;</small>
+                <small>Choisissez un mode d'acces a l'application</small>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-screen" class="login-screen" style="display:none;">
+        <div class="login-card">
+            <div id="panel-user-login">
+                <div class="login-header">
+                    <div class="login-logo">&#9764;</div>
+                    <h1>Gestion Hospitaliere</h1>
+                    <p>Systeme de gestion hospitaliere integre</p>
+                </div>
+                <form id="login-form" class="login-form">
+                    <div class="form-group" id="login-hopital-group">
+                        <label for="login-hopital">Etablissement</label>
+                        <select id="login-hopital" required>
+                            <option value="">— Selectionner l'etablissement —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-user">Utilisateur</label>
+                        <input type="text" id="login-user" placeholder="Nom d'utilisateur" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-pass">Mot de passe</label>
+                        <input type="password" id="login-pass" placeholder="Mot de passe" required>
+                    </div>
+                    <div id="login-error" class="login-error" style="display:none;"></div>
+                    <button type="submit" id="login-submit" class="btn btn-primary btn-block">Se connecter</button>
+                </form>
+                <button type="button" id="btn-user-back" class="btn btn-link btn-block">&#8592; Retour</button>
+            </div>
+
+            <div id="panel-global-login" style="display:none;">
+                <div class="login-header">
+                    <div class="login-logo login-logo-admin">&#9733;</div>
+                    <h1>ADMIN (global)</h1>
+                    <p>Compte maitre — gestion des hopitaux / cliniques</p>
+                </div>
+                <form id="global-login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="global-login-user">Identifiant maître</label>
+                        <input type="text" id="global-login-user" placeholder="Identifiant" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="global-login-pass">Mot de passe</label>
+                        <input type="password" id="global-login-pass" placeholder="Mot de passe" required>
+                    </div>
+                    <div id="global-login-error" class="login-error" style="display:none;"></div>
+                    <button type="submit" id="global-login-submit" class="btn btn-admin btn-block">Acceder a l'administration</button>
+                </form>
+                <button type="button" id="btn-global-back" class="btn btn-link btn-block">&#8592; Retour</button>
             </div>
         </div>
     </div>
@@ -53,6 +98,7 @@
                 <div class="user-info">
                     <span class="user-name" id="user-name">Admin</span>
                     <span class="user-role" id="user-role">Administrateur</span>
+                    <span class="user-hospital" id="user-hospital"></span>
                 </div>
             </div>
             <nav class="sidebar-nav" id="sidebar-nav">
@@ -141,6 +187,7 @@
                 </div>
                 <div class="top-bar-right">
                     <span class="current-date" id="current-date"></span>
+                    <button id="btn-exit-supervision" class="btn btn-icon btn-exit-sup" title="Quitter la supervision du compte ADMIN global" hidden>&#8617;</button>
                     <button id="install-btn" class="btn btn-icon btn-install" title="Installer l'application" hidden>&#11015;</button>
                     <button class="btn btn-icon" id="btn-search" title="Rechercher">&#128269;</button>
                 </div>

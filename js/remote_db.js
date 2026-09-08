@@ -1,13 +1,17 @@
 // ============================================================
-// js/remote_db.js — Backends distants partagés
+// js/remote_db.js — Backends distants partages
 // ------------------------------------------------------------
-// Fournit la même API que DB (voir js/db.js) sur une base
+// Fournit la meme API que DB (voir js/db.js) sur une base
 // centrale unique  (store, id) -> data, choisie via
 // APP_CONFIG.BACKEND :
 //   'supabase' : table Postgres "records" (voir cloud/supabase-setup.sql)
 //   'firebase' : Realtime Database  (tree /records/{store}/{id})
 //
-// La façade DB (js/db.js) utilise ce module quand
+// Multitenant : en mode cloud, les donnees de chaque hopital sont
+// isolees sous /records/{hopitalId}/{store}/{id} et les etablissements
+// sont enregistres sous /master/hopitaux/{hopitalId} (compte ADMIN global).
+//
+// La facade DB (js/db.js) utilise ce module quand
 // APP_CONFIG.MODE === 'cloud'. Pour les tests, setTransport(fn)
 // remplace fetch par un simulacre.
 // ============================================================
@@ -206,12 +210,47 @@ const RemoteDB = (function () {
             return resp;
         },
 
-        async _obj(store, key) {
-            const url = '/' + encodeURIComponent(store) + (key != null ? '/' + encodeURIComponent(key) : '') + '.json';
-            const resp = await this._perform(url, { method: 'GET' });
+        // Prefixe multitenant : les donnees de l'hopital courant sont
+        // stockees sous /records/{hopitalId}/. Avant la selection d'un
+        // hopital (ou en mode heritage), on retombe sur /records/.
+        _recordsPrefix() {
+            const tid = (window && window.Tenant) ? Tenant.get() : null;
+            if (!tid) return '/records/';
+            return '/records/' + encodeURIComponent(tid) + '/';
+        },
+
+        async _raw(suffix, method, body) {
+            const resp = await this._perform(suffix, { method: method, body: body ? JSON.stringify(body) : undefined });
             const text = await resp.text();
-            if (!text) return null;
-            return JSON.parse(text);
+            return text ? JSON.parse(text) : null;
+        },
+
+        // Chemins et operations hors store (registre des hopitaux, migration).
+        async masterGet(suffix) {
+            return this._raw('/master/' + suffix + '.json', 'GET');
+        },
+        async masterPut(suffix, value) {
+            return this._raw('/master/' + suffix + '.json', 'PUT', value);
+        },
+        async masterDelete(suffix) {
+            return this._raw('/master/' + suffix + '.json', 'DELETE');
+        },
+        async rawGet(suffix) {
+            return this._raw(suffix, 'GET');
+        },
+        async rawPut(suffix, value) {
+            return this._raw(suffix, 'PUT', value);
+        },
+        async rawDelete(suffix) {
+            return this._raw(suffix, 'DELETE');
+        },
+        async rawPatch(suffix, value) {
+            return this._raw(suffix, 'PATCH', value);
+        },
+
+        async _obj(store, key) {
+            const url = this._recordsPrefix() + encodeURIComponent(store) + (key != null ? '/' + encodeURIComponent(key) : '') + '.json';
+            return this._raw(url, 'GET');
         },
 
         async getAll(store) {
@@ -225,29 +264,29 @@ const RemoteDB = (function () {
         },
 
         async put(store, data) {
-            const url = '/' + encodeURIComponent(store) + '/' + encodeURIComponent(String(data[keyPathOf(store)])) + '.json';
+            const url = this._recordsPrefix() + encodeURIComponent(store) + '/' + encodeURIComponent(String(data[keyPathOf(store)])) + '.json';
             await this._perform(url, { method: 'PUT', body: JSON.stringify(data) });
         },
 
         async putAll(store, items) {
             const payload = {};
             items.forEach(item => { payload[item[keyPathOf(store)]] = item; });
-            const url = '/' + encodeURIComponent(store) + '.json';
+            const url = this._recordsPrefix() + encodeURIComponent(store) + '.json';
             await this._perform(url, { method: 'PATCH', body: JSON.stringify(payload) });
         },
 
         async delete(store, key) {
-            const url = '/' + encodeURIComponent(store) + '/' + encodeURIComponent(String(key)) + '.json';
+            const url = this._recordsPrefix() + encodeURIComponent(store) + '/' + encodeURIComponent(String(key)) + '.json';
             await this._perform(url, { method: 'DELETE' });
         },
 
         async clear(store) {
-            const url = '/' + encodeURIComponent(store) + '.json';
+            const url = this._recordsPrefix() + encodeURIComponent(store) + '.json';
             await this._perform(url, { method: 'DELETE' });
         },
 
         async count(store) {
-            const url = '/' + encodeURIComponent(store) + '.json?shallow=true';
+            const url = this._recordsPrefix() + encodeURIComponent(store) + '.json?shallow=true';
             const resp = await this._perform(url, { method: 'GET' });
             const text = await resp.text();
             if (!text) return 0;
@@ -315,6 +354,15 @@ const RemoteDB = (function () {
         async clear(store) { return this._need().clear(store); },
         async count(store) { return this._need().count(store); },
         async getByIndex(store, indexName, value) { return this._need().getByIndex(store, indexName, value); },
+
+        // --- API maître (registre des hopitaux + migration) ---
+        async masterGet(suffix) { return this._need().masterGet(suffix); },
+        async masterPut(suffix, value) { return this._need().masterPut(suffix, value); },
+        async masterDelete(suffix) { return this._need().masterDelete(suffix); },
+        async rawGet(suffix) { return this._need().rawGet(suffix); },
+        async rawPut(suffix, value) { return this._need().rawPut(suffix, value); },
+        async rawPatch(suffix, value) { return this._need().rawPatch(suffix, value); },
+        async rawDelete(suffix) { return this._need().rawDelete(suffix); },
 
         async exportAll() {
             const data = {};

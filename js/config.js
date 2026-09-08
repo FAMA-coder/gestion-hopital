@@ -29,7 +29,19 @@ const APP_CONFIG = {
     // Exemple : 'https://monprojet-default-rtdb.firebaseio.com'
     FIREBASE_DATABASE_URL: 'https://my-gest-hopital-default-rtdb.firebaseio.com',
     // Cle Web API (Parametres du projet -> Accompagnement des applications -> Cle Web API).
-    FIREBASE_API_KEY: 'AIzaSyDHBNtIEWnDGjJ2R_o6lyHMu6dztBYCvQc'
+    FIREBASE_API_KEY: 'AIzaSyDHBNtIEWnDGjJ2R_o6lyHMu6dztBYCvQc',
+
+    // ----- Compte ADMIN (global) -----
+    // Compte maitre utilise UNIQUEMENT depuis le bouton "COMPTE ADMIN" de
+    // l'ecran de demarrage. Il donne acces a la gestion (creation,
+    // modification, suppression, supervision, blocage/deblocage) de tous
+    // les hopitaux/cliniques de la plateforme. Aucun utilisateur d'hopital
+    // ne peut se connecter sur ce compte (compare un hash SHA-256).
+    GLOBAL_ADMIN: {
+        login: 'FAMA',
+        passHash: '3bada7c42bc20631daf5274f0d8ff3e82d8ee09b27dffd7828cda01cd3ab9123',
+        nom: 'Compte Maitre'
+    }
 };
 
 window.APP_CONFIG = APP_CONFIG;
