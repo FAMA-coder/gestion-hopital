@@ -97,6 +97,7 @@ async function runApp() {
         setupLogoutHandler();
         setupModalClose();
         setupDateDisplay();
+        setupMobileNav();
     } catch (err) {
         console.error('Initialization error:', err);
         UI.toast('Erreur d\'initialisation: ' + err.message, 'error');
@@ -190,6 +191,40 @@ function setupDateDisplay() {
     const dateEl = document.getElementById('current-date');
     dateEl.textContent = new Date().toLocaleDateString('fr-FR', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+}
+
+function setupMobileNav() {
+    window.__mobileNavRan = (window.__mobileNavRan || 0) + 1;
+    const sidebar = document.getElementById('sidebar');
+    const btnMenu = document.getElementById('btn-menu');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    const closeMenu = () => {
+        sidebar.classList.remove('mobile-open');
+        if (btnMenu) btnMenu.classList.remove('active');
+    };
+
+    const toggleMenu = () => {
+        if (isMobile()) {
+            sidebar.classList.toggle('mobile-open');
+        } else {
+            sidebar.classList.toggle('collapsed');
+        }
+    };
+
+    if (btnMenu) btnMenu.addEventListener('click', toggleMenu);
+    if (toggleBtn) toggleBtn.addEventListener('click', toggleMenu);
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => { if (isMobile()) closeMenu(); });
+    });
+    document.querySelector('.main-content').addEventListener('click', (e) => {
+        if (e.target.closest && e.target.closest('#btn-menu, #sidebar-toggle')) return;
+        if (isMobile() && sidebar && !sidebar.contains(e.target)) closeMenu();
+    });
+    window.addEventListener('resize', () => {
+        if (!isMobile()) closeMenu();
     });
 }
 
