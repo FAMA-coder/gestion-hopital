@@ -105,12 +105,28 @@ Alternatives : **Vercel** (`vercel` CLI ou import dossier), **Cloudflare Pages**
 
 # FICHE DE CONNEXION ET DE GESTION
 
+## Mise en ligne effective
+
+| Elément                                   | Valeur                                                          |
+|-------------------------------------------|-----------------------------------------------------------------|
+| **Hébergeur du site**                     | GitHub Pages (dépôt `gestion-hopital` de `FAMA-coder`)          |
+| **Dépôt**                                 | https://github.com/FAMA-coder/gestion-hopital                   |
+| **Backend de données**                    | **Firebase Realtime Database** (projet `my-gest-hopital`)       |
+| **Base Realtime**                         | https://my-gest-hopital-default-rtdb.firebaseio.com             |
+| **Authentification base**                 | Firebase Auth **anonyme** (fournisseur « Anonyme » activé)      |
+| **Règles de la base**                     | `{ "rules": { ".read": "auth != null", ".write": "auth != null" } }` |
+| **Clé Web API**                           | dans `js/config.js` → `FIREBASE_API_KEY`                        |
+
+> Les valeurs de connexion sont centralisées dans `js/config.js` (mode `cloud`,
+> backend `firebase`). Pour changer de base : modifier ce fichier puis repousser
+> sur le dépôt GitHub.
+
 ## Informations de connexion
 
 | Elément                                   | Valeur                                                               |
 |-------------------------------------------|----------------------------------------------------------------------|
-| **URL de l'application**                  | *(fournie par GitHub Pages / Netlify après déploiement)*             |
-| **Serveur de données**                    | *(Supabase ou Firebase, URL du projet / de la base Realtime)*        |
+| **URL de l'application**                  | https://FAMA-coder.github.io/gestion-hopital/                        |
+| **Serveur de données**                    | Firebase Realtime Database — https://my-gest-hopital-default-rtdb.firebaseio.com |
 | **Compte maître (super administrateur)**  | Utilisateur : `FAMA` — Mot de passe : `aminatN1FA@`                  |
 | **Compte administrateur**                 | Utilisateur : `admin` — Mot de passe : `admin123`                    |
 | **Comptes de démonstration**              | `dr_mukendi`/`med123`, `infirmier1`/`inf123`, `pharmacie`/`pharm123` |
@@ -139,7 +155,13 @@ peut saisir/modifier les informations de l'hôpital dans **Paramètres → Hôpi
 
 - L'application embarque ses clés d'accès dans `js/config.js` : toute personne
   disposant de ces valeurs peut accéder aux données. Considérez-les comme
-  confidentielles à l'équipe (dépôt GitHub **privé**).
+  confidentielles à l'équipe (idéalement dépôt GitHub **privé**).
+- **Note déploiement actuel** : le dépôt `gestion-hopital` est actuellement
+  **public** (le jeton GitHub ne permettait pas de créer un dépôt privé). La
+  clé Web API seule ne donne pas accès à la base (les règles exigent
+  `auth != null`), mais passer le dépôt en privé est recommandé : attention,
+  l'adresse Pages ne sera alors consultable que par les comptes GitHub invités
+  comme collaborateurs du dépôt.
 - **Supabase — rotation du secret** : dans Supabase (SQL Editor), exécuter
   `update public.app_config set valeur='NOUVELLE_CLE' where cle='app_secret';`
   puis modifier `APP_SECRET` dans `js/config.js` et redéployer.
