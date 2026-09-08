@@ -166,34 +166,30 @@ function setupLaunchHandler() {
     document.getElementById('btn-global-back').addEventListener('click', showLaunch);
 }
 
-// Liste des etablissements dans le formulaire de connexion utilisateur.
+// Champ du nom d'etablissement dans le formulaire de connexion utilisateur.
+// Affiche le champ en mode cloud (la recherche se fait a la soumission) ;
+// le masque en mode local (IndexedDB, sans registre central).
 async function loadHospitalSelect() {
-    const select = document.getElementById('login-hopital');
+    const input = document.getElementById('login-hopital');
     const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
     const group = document.getElementById('login-hopital-group');
+    if (!input || !group) return;
     if (!isCloud) {
-        // Mode local (IndexedDB) : pas de registre central, pas de choix d'etablissement.
-        if (select) { select.required = false; select.style.display = 'none'; }
-        if (group) { const lbl = group.querySelector('label'); if (lbl) lbl.style.display = 'none'; }
+        input.required = false;
+        group.style.display = 'none';
         return;
     }
-    if (select) { select.required = true; select.style.display = ''; }
-    if (group) { const lbl = group.querySelector('label'); if (lbl) lbl.style.display = ''; }
-    const current = (window.Tenant) ? Tenant.get() : null;
-    let list = [];
-    try {
-        list = await Tenant.list();
-    } catch (e) { /* registre indisponible */ }
-    select.innerHTML = '<option value="">— Selectionner l\'etablissement —</option>';
-    list.forEach(h => {
-        const blocked = h.statut === 'bloque';
-        const opt = document.createElement('option');
-        opt.value = h.id;
-        opt.textContent = (h.nom || h.id) + (h.ville ? ' — ' + h.ville : '') + (blocked ? ' (bloque)' : '');
-        opt.disabled = blocked;
-        select.appendChild(opt);
-    });
-    if (current && list.some(h => h.id === current)) select.value = current;
+    input.required = true;
+    group.style.display = '';
+    input.value = '';
+}
+
+// Resout le nom saisi vers un etablissement cree par le compte ADMIN global.
+async function resolveHospital(inputName) {
+    const name = String(inputName || '').trim();
+    const list = await Tenant.list();
+    const found = list.find(h => String(h.nom || '').trim().toLowerCase() === name.toLowerCase());
+    return found || null;
 }
 
 async function showApp() {
@@ -245,23 +241,32 @@ function setupLoginHandler() {
         const original = submitBtn.innerHTML;
 
         const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
-        const tid = document.getElementById('login-hopital').value;
-        if (isCloud && !tid) {
-            errorEl.textContent = 'Selectionnez l\'etablissement auquel vous etes rattache(e).';
+        const typedName = document.getElementById('login-hopital').value;
+        let tid = null;
+        if (isCloud && !typedName) {
+            errorEl.textContent = 'Saisissez le nom de votre hopital / clinique.';
             errorEl.style.display = 'block';
             return;
         }
 
         try {
-            // Un etablissement bloque par le compte ADMIN global ne permet
-            // plus la connexion de ses utilisateurs.
+            // En mode cloud, le nom saisi est resolu vers l'etablissement
+            // cree par le compte ADMIN global.
             if (isCloud) {
-                const h = await Tenant.getOne(tid);
-                if (h && h.statut === 'bloque') {
+                const h = await resolveHospital(typedName);
+                if (!h) {
+                    errorEl.textContent = 'Aucun etablissement trouve avec ce nom. Vérifiez l\'orthographe ou contactez l\'administration.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                // Un etablissement bloque par le compte ADMIN global ne permet
+                // plus la connexion de ses utilisateurs.
+                if (h.statut === 'bloque') {
                     errorEl.textContent = 'Cet etablissement est bloque par l\'administration. Contactez l\'administration pour son deblocage.';
                     errorEl.style.display = 'block';
                     return;
                 }
+                tid = h.id;
                 Tenant.set(tid);
                 Cache.invalidateAll();
             }

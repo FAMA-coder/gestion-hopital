@@ -140,7 +140,7 @@ Au démarrage, l'application affiche **trois boutons** :
 
 | Bouton                  | Rôle                                                                 |
 |-------------------------|----------------------------------------------------------------------|
-| **Compte utilisateur**  | Connexion d'un utilisateur d'un établissement (avec choix de l'établissement en mode cloud). |
+| **Compte utilisateur**  | Connexion d'un utilisateur d'un établissement (saisie du **nom** de l'établissement en mode cloud). |
 | **COMPTE ADMIN (global)** | Connexion au **compte maître** (`FAMA` / `aminatN1FA@`) puis console de gestion de tous les établissements. |
 | **Quitter**             | Ferme l'onglet / la fenêtre.                                         |
 
