@@ -107,6 +107,7 @@ async function runApp() {
         setupGlobalLoginHandler();
         setupLogoutHandler();
         setupExitSupervisionHandler();
+        setupAdminShortcut();
         setupModalClose();
         setupDateDisplay();
         setupMobileNav();
@@ -164,6 +165,23 @@ function setupLaunchHandler() {
     document.getElementById('launch-quit').addEventListener('click', quitApp);
     document.getElementById('btn-user-back').addEventListener('click', showLaunch);
     document.getElementById('btn-global-back').addEventListener('click', showLaunch);
+}
+
+// Masquer / afficher le bouton "COMPTE ADMIN (global)".
+// Raccourci clavier : Ctrl + Shift + A (masque par defaut).
+function setupAdminShortcut() {
+    const btn = document.getElementById('launch-admin');
+    let visible = false;
+    btn.style.display = 'none';
+    window.addEventListener('keydown', (e) => {
+        if (!(e.ctrlKey && e.shiftKey)) return;
+        const key = String(e.key || '').toLowerCase();
+        if (key !== 'a') return;
+        e.preventDefault();
+        e.stopPropagation();
+        visible = !visible;
+        btn.style.display = visible ? 'block' : 'none';
+    });
 }
 
 // Champ du nom d'etablissement dans le formulaire de connexion utilisateur.

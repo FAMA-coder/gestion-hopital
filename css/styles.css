@@ -1035,6 +1035,10 @@ html { scrollbar-width: auto; scrollbar-color: #c1c1c1 transparent; }
 /* ===== ECRAN DE DEMARRAGE ===== */
 .launch-actions { display: flex; flex-direction: column; gap: 12px; }
 
+/* Bouton "COMPTE ADMIN (global)" : masque par defaut,
+   affiche via Ctrl + Shift + A. */
+#launch-admin { display: none; }
+
 .launch-card .btn { justify-content: center; }
 
 .btn-admin {
