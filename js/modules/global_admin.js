@@ -127,6 +127,7 @@ const GlobalAdmin = {
                 <td>${counts.consultations}</td>
                 <td>${counts.factures}</td>
                 <td>
+                    <button class="btn btn-icon" data-act="user" data-tid="${this._esc(h.id)}" title="Ajouter un utilisateur">&#128101;</button>
                     <button class="btn btn-icon" data-act="edit" data-tid="${this._esc(h.id)}" title="Modifier">&#9998;</button>
                     <button class="btn btn-icon" data-act="supervise" data-tid="${this._esc(h.id)}" title="Superviser (ouvrir)">&#128065;</button>
                     <button class="btn btn-icon" data-act="toggle" data-tid="${this._esc(h.id)}" title="${actif ? 'Bloquer' : 'Debloquer'}">${actif ? '&#128683;' : '&#9989;'}</button>
@@ -158,6 +159,7 @@ const GlobalAdmin = {
     },
 
     async _action(act, tid) {
+        if (act === 'user') return this._dialogNewUser(tid);
         if (act === 'edit') return this._dialogEdit(tid);
         if (act === 'supervise') return this._supervise(tid);
         if (act === 'toggle') return this._toggle(tid);
@@ -188,6 +190,99 @@ const GlobalAdmin = {
             UI.toast('Etablissement cree : ' + nom, 'success');
             self.render();
         };
+    },
+
+    // Cree un utilisateur dans l'etablissement existant (ecriture directe
+    // dans /records/{tenant}/users/, independamment du tenant courant).
+    _dialogNewUser(tid) {
+        var self = this;
+        (async () => {
+            var h = await Tenant.getOne(tid);
+            if (!h) { UI.toast('Etablissement introuvable', 'error'); return; }
+            var roleOpts = (await self._roleOptions(tid))
+                .map(r => '<option value="' + self._esc(r.value) + '">' + self._esc(r.label) + '</option>').join('');
+            var services = await self._serviceOptions(tid);
+            var svcOptions = services
+                .map(s => '<option value="' + self._esc(s.value) + '">' + self._esc(s.label) + '</option>').join('');
+            var svcGroup = services.length
+                ? '<div class="form-group"><label>Service</label><select id="ga-user-service"><option value="">-- Aucun --</option>' + svcOptions + '</select></div>'
+                : '<input type="hidden" id="ga-user-service" value="">';
+
+            UI.showModal('Nouvel utilisateur - ' + (h.nom || tid),
+                '<form id="ga-user-form" class="login-form">' +
+                '<div class="form-group"><label>Nom d\'utilisateur</label><input id="ga-user-login" required placeholder="Ex : dr_ngoy"></div>' +
+                '<div class="form-group"><label>Nom complet</label><input id="ga-user-nom" required placeholder="Ex : Dr. Ngoy Kabongo"></div>' +
+                '<div class="form-group"><label>Mot de passe</label><input id="ga-user-pass" type="password" required placeholder="********"></div>' +
+                '<div class="form-group"><label>Role</label><select id="ga-user-role">' + roleOpts + '</select></div>' +
+                svcGroup +
+                '<div class="form-group"><label>Statut</label><select id="ga-user-actif"><option value="1">Actif</option><option value="0">Inactif</option></select></div>' +
+                '</form>',
+                '<button class="btn btn-primary" id="ga-user-save">Enregistrer</button>' +
+                '<button class="btn btn-outline" id="ga-user-cancel">Annuler</button>');
+            document.getElementById('ga-user-cancel').onclick = function () { UI.hideModal(); };
+            document.getElementById('ga-user-save').onclick = async function () {
+                var login = document.getElementById('ga-user-login').value.trim();
+                var nom = document.getElementById('ga-user-nom').value.trim();
+                var pass = document.getElementById('ga-user-pass').value;
+                if (!login || !nom || !pass) { UI.toast('Nom d\'utilisateur, nom complet et mot de passe sont obligatoires', 'error'); return; }
+                if (login.length < 3) { UI.toast('Nom d\'utilisateur trop court (3 caracteres minimum)', 'error'); return; }
+                try {
+                    var usersObj = await RemoteDB.rawGet('/records/' + encodeURIComponent(tid) + '/users.json');
+                    var users = (usersObj && typeof usersObj === 'object') ? Object.keys(usersObj).map(k => usersObj[k]) : [];
+                    if (users.some(u => String(u.nomUtilisateur || '').trim().toUpperCase() === login.toUpperCase())) {
+                        UI.toast('Ce nom d\'utilisateur existe deja dans cet etablissement', 'error'); return;
+                    }
+                    if (login.toUpperCase() === (window.Auth ? Auth.MASTER_USERNAME : 'FAMA').toUpperCase()) {
+                        UI.toast('Ce nom d\'utilisateur est reserve au compte maître', 'error'); return;
+                    }
+                    var id = RemoteDB.generateId();
+                    var rec = {
+                        id: id,
+                        nomUtilisateur: login,
+                        nomComplet: nom,
+                        motDePasse: Auth.hashPassword(pass),
+                        role: document.getElementById('ga-user-role').value,
+                        serviceId: document.getElementById('ga-user-service').value || null,
+                        actif: document.getElementById('ga-user-actif').value === '1',
+                        creePar: 'ADMIN global',
+                        date: new Date().toISOString()
+                    };
+                    await RemoteDB.rawPut('/records/' + encodeURIComponent(tid) + '/users/' + encodeURIComponent(id) + '.json', rec);
+                    try {
+                        await RemoteDB.rawPut('/records/' + encodeURIComponent(tid) + '/journal/' + encodeURIComponent(id) + '.json', {
+                            id: id, userId: id, username: login, date: new Date().toISOString(),
+                            action: 'Creation', module: 'parametres',
+                            details: 'Utilisateur ' + login + ' (cree par le compte ADMIN global)'
+                        });
+                    } catch (e) { /* journal non bloquant */ }
+                    UI.hideModal();
+                    UI.toast('Utilisateur ' + login + ' cree dans ' + (h.nom || tid), 'success');
+                    self.render();
+                } catch (err) {
+                    UI.toast('Erreur lors de la creation : ' + err.message, 'error');
+                }
+            };
+        })();
+    },
+
+    async _roleOptions(tid) {
+        var labels = window.Auth ? Auth.ROLE_LABELS : {};
+        var opts = Object.keys(labels).map(k => ({ value: k, label: labels[k] }));
+        try {
+            var customs = await RemoteDB.rawGet('/records/' + encodeURIComponent(tid) + '/roles.json');
+            if (customs && typeof customs === 'object') {
+                Object.keys(customs).forEach(k => opts.push({ value: k, label: (customs[k].nom || k) }));
+            }
+        } catch (e) { /* roles non bloquant */ }
+        return opts;
+    },
+
+    async _serviceOptions(tid) {
+        try {
+            var obj = await RemoteDB.rawGet('/records/' + encodeURIComponent(tid) + '/services.json');
+            if (!obj || typeof obj !== 'object') return [];
+            return Object.keys(obj).map(k => obj[k]).filter(s => s && s.actif !== false).map(s => ({ value: s.id, label: s.nom }));
+        } catch (e) { return []; }
     },
 
     async _dialogEdit(tid) {

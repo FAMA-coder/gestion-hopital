@@ -41,7 +41,7 @@ foreach ($imp in $scripts) {
 Write-Host ""
 Write-Host "=== Verification des modules enregistres ===" -ForegroundColor Cyan
 $appContent = Get-Content -LiteralPath "$root\js\app.js" -Raw
-$modNames = [regex]::Matches($appContent, "'(dashboard|admissions|patients|consultations|urgences|hospitalisations|services|pharmacie|laboratoire|imagerie|chirurgie|personnel|facturation|paiements|documents|reporting|parametres|sauvegarde)'") | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+$modNames = [regex]::Matches($appContent, "'(dashboard|admissions|patients|consultations|urgences|hospitalisations|services|pharmacie|laboratoire|imagerie|chirurgie|personnel|facturation|paiements|documents|reporting|parametres)'") | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
 
 foreach ($name in $modNames) {
     $moduleFile = Get-ChildItem -Path "$root\js\modules" -Filter "$name.js"

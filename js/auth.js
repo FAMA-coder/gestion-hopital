@@ -56,8 +56,7 @@ const Auth = {
         ['paiements', 'Paiements'],
         ['documents', 'Documents'],
         ['reporting', 'Reporting'],
-        ['parametres', 'Parametres'],
-        ['sauvegarde', 'Sauvegarde & Restauration']
+        ['parametres', 'Parametres']
     ],
 
     // Cache des permissions effectives pour l'utilisateur courant (synchrone)

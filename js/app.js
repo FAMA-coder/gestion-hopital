@@ -46,7 +46,6 @@ const SCRIPT_FILES = [
     'js/modules/reporting.js',
     'js/modules/parametres.js',
     'js/modules/aide.js',
-    'js/modules/sauvegarde.js',
     'js/modules/global_admin.js'
 ];
 
@@ -419,7 +418,7 @@ function setupNavPermissions() {
 }
 
 function registerModules() {
-    const modules = ['dashboard', 'receptions', 'admissions', 'patients', 'consultations', 'urgences', 'hospitalisations', 'services', 'tarifs', 'pharmacie', 'laboratoire', 'imagerie', 'chirurgie', 'personnel', 'remunerations', 'contrats', 'depenses', 'facturation', 'paiements', 'documents', 'reporting', 'parametres', 'aide', 'sauvegarde'];
+    const modules = ['dashboard', 'receptions', 'admissions', 'patients', 'consultations', 'urgences', 'hospitalisations', 'services', 'tarifs', 'pharmacie', 'laboratoire', 'imagerie', 'chirurgie', 'personnel', 'remunerations', 'contrats', 'depenses', 'facturation', 'paiements', 'documents', 'reporting', 'parametres', 'aide'];
     modules.forEach(name => {
         const mod = window[name + 'Module'];
         if (mod) {

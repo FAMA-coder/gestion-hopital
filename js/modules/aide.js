@@ -340,7 +340,7 @@ const aideModule = {
                 `<ul style="margin:0;padding-left:20px">
                     <li><strong>J'ai oublie mon mot de passe.</strong> Un administrateur peut le reinitialiser dans <strong>Parametres &gt; Utilisateurs</strong>.</li>
                     <li><strong>Ou sont stockees mes donnees ?</strong> Dans le navigateur (IndexedDB). Elles ne sont pas envoyees sur Internet.</li>
-                    <li><strong>Comment recuperer mes donnees sur un autre appareil ?</strong> Faites une sauvegarde, puis restaurez-la sur l'autre appareil (onglet <strong>Sauvegarde</strong>).</li>
+                    <li><strong>Comment recuperer mes donnees sur un autre appareil ?</strong> Faites une sauvegarde, puis restaurez-la sur l'autre appareil (<strong>Parametres &gt; Sauvegarde</strong>).</li>
                     <li><strong>Pourquoi certains boutons n'apparaissent pas ?</strong> Votre role ne possede pas les permissions requises. Contactez un administrateur.</li>
                     <li><strong>L'onglet est-il vide ?</strong> Creez d'abord un element (patient, service, etc.) puis utilisez le bouton en haut a droite du module.</li>
                     <li><strong>Comment installer l'application ?</strong> Ouvrez via <em>lancer.bat</em> puis utilisez l'option d'installation du navigateur (voir section precedente).</li>

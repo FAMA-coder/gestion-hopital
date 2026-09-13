@@ -185,8 +185,8 @@ registre des établissements se trouve sous `/master/hopitaux/...` :
   écriture gagnante en cas d'édition simultanée du même enregistrement.
 - **Lecture différée** : les listes sont mises en cache ~5 minutes côté
   navigateur. Recharger (F5) pour voir les modifications des autres postes.
-- **Sauvegardes** : Paramètres → Sauvegarde (export/import JSON), ou sauvegarde
-  automatique (Sauvegarde → activer). Faites un export régulier, et conservez une
+- **Sauvegardes** : Paramètres → Sauvegarde (export/import JSON, sauvegarde
+  automatique à activer, exports CSV). Faites un export régulier, et conservez une
   copie du mot de passe de la base (Supabase) / du projet (Firebase).
 
 ## Migration d'une base locale existante vers le cloud
