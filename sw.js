@@ -3,7 +3,7 @@
    Strategie : cache-first pour les ressources statiques (shell)
    + reseau en secours ; les donnees restent dans IndexedDB.
    ============================================================ */
-const VERSION = 'gesthopital-v8';
+const VERSION = 'gesthopital-v9';
 const PRECACHE = [
   './index.html',
   './manifest.json',
@@ -31,6 +31,7 @@ const PRECACHE = [
   'js/core/cache.js',
   'js/core/logger.js',
   'js/modules/dashboard.js',
+  'js/modules/receptions.js',
   'js/modules/admissions.js',
   'js/modules/patients.js',
   'js/modules/consultations.js',

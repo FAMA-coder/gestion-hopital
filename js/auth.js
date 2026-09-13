@@ -5,16 +5,16 @@ const Auth = {
     // Permissions par defaut. Elles sont ecrasees si un enregistrement
     // existe dans le store 'permissions' pour le role concerne (gestion UI).
     DEFAULT_PERMISSIONS: {
-        admin: { dashboard: 3, admissions: 3, patients: 3, consultations: 3, urgences: 3, hospitalisations: 3, services: 3, tarifs: 3, pharmacie: 3, laboratoire: 3, imagerie: 3, chirurgie: 3, personnel: 3, remunerations: 3, contrats: 3, depenses: 3, facturation: 3, paiements: 3, documents: 3, reporting: 3, parametres: 3 },
-        directeur: { dashboard: 3, admissions: 3, patients: 3, consultations: 2, urgences: 2, hospitalisations: 2, services: 3, tarifs: 3, pharmacie: 2, laboratoire: 2, imagerie: 2, chirurgie: 2, personnel: 3, remunerations: 3, contrats: 3, depenses: 3, facturation: 3, paiements: 3, documents: 2, reporting: 3, parametres: 2 },
-        medecin: { dashboard: 1, admissions: 2, patients: 2, consultations: 3, urgences: 2, hospitalisations: 2, services: 1, tarifs: 1, pharmacie: 1, laboratoire: 2, imagerie: 2, chirurgie: 2, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 2, reporting: 1, parametres: 0 },
-        infirmier: { dashboard: 1, admissions: 1, patients: 2, consultations: 1, urgences: 2, hospitalisations: 3, services: 1, tarifs: 1, pharmacie: 2, laboratoire: 0, imagerie: 0, chirurgie: 1, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 0, parametres: 0 },
-        pharmacien: { dashboard: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 3, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 1, paiements: 1, documents: 1, reporting: 1, parametres: 0 },
-        laborantin: { dashboard: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 3, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
-        radiologue: { dashboard: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 3, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
-        chirurgien: { dashboard: 1, admissions: 0, patients: 1, consultations: 1, urgences: 1, hospitalisations: 1, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 3, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
-        secretaire: { dashboard: 1, admissions: 3, patients: 3, consultations: 1, urgences: 1, hospitalisations: 1, services: 1, tarifs: 2, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 1, remunerations: 0, contrats: 2, depenses: 2, facturation: 2, paiements: 2, documents: 2, reporting: 1, parametres: 0 },
-        caissier: { dashboard: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 1, facturation: 3, paiements: 3, documents: 1, reporting: 1, parametres: 0 }
+        admin: { dashboard: 3, receptions: 3, admissions: 3, patients: 3, consultations: 3, urgences: 3, hospitalisations: 3, services: 3, tarifs: 3, pharmacie: 3, laboratoire: 3, imagerie: 3, chirurgie: 3, personnel: 3, remunerations: 3, contrats: 3, depenses: 3, facturation: 3, paiements: 3, documents: 3, reporting: 3, parametres: 3 },
+        directeur: { dashboard: 3, receptions: 3, admissions: 3, patients: 3, consultations: 2, urgences: 2, hospitalisations: 2, services: 3, tarifs: 3, pharmacie: 2, laboratoire: 2, imagerie: 2, chirurgie: 2, personnel: 3, remunerations: 3, contrats: 3, depenses: 3, facturation: 3, paiements: 3, documents: 2, reporting: 3, parametres: 2 },
+        medecin: { dashboard: 1, receptions: 3, admissions: 2, patients: 2, consultations: 3, urgences: 2, hospitalisations: 2, services: 1, tarifs: 1, pharmacie: 1, laboratoire: 2, imagerie: 2, chirurgie: 2, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 2, reporting: 1, parametres: 0 },
+        infirmier: { dashboard: 1, receptions: 2, admissions: 1, patients: 2, consultations: 1, urgences: 2, hospitalisations: 3, services: 1, tarifs: 1, pharmacie: 2, laboratoire: 0, imagerie: 0, chirurgie: 1, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 0, parametres: 0 },
+        pharmacien: { dashboard: 1, receptions: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 3, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 1, paiements: 1, documents: 1, reporting: 1, parametres: 0 },
+        laborantin: { dashboard: 1, receptions: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 3, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
+        radiologue: { dashboard: 1, receptions: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 3, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
+        chirurgien: { dashboard: 1, receptions: 1, admissions: 0, patients: 1, consultations: 1, urgences: 1, hospitalisations: 1, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 3, personnel: 0, remunerations: 0, contrats: 1, depenses: 0, facturation: 0, paiements: 0, documents: 1, reporting: 1, parametres: 0 },
+        secretaire: { dashboard: 1, receptions: 3, admissions: 3, patients: 3, consultations: 1, urgences: 1, hospitalisations: 1, services: 1, tarifs: 2, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 1, remunerations: 0, contrats: 2, depenses: 2, facturation: 2, paiements: 2, documents: 2, reporting: 1, parametres: 0 },
+        caissier: { dashboard: 1, receptions: 1, admissions: 0, patients: 1, consultations: 0, urgences: 0, hospitalisations: 0, services: 0, tarifs: 1, pharmacie: 0, laboratoire: 0, imagerie: 0, chirurgie: 0, personnel: 0, remunerations: 0, contrats: 1, depenses: 1, facturation: 3, paiements: 3, documents: 1, reporting: 1, parametres: 0 }
     },
 
     ROLE_LABELS: {
@@ -38,9 +38,8 @@ const Auth = {
     // Liste des modules et leurs libelles (pour l'interface de permissions)
     MODULES: [
         ['dashboard', 'Tableau de bord'],
+        ['receptions', 'Receptions'],
         ['admissions', 'Admissions'],
-        ['patients', 'Patients'],
-        ['consultations', 'Consultations'],
         ['urgences', 'Urgences'],
         ['hospitalisations', 'Hospitalisations'],
         ['services', 'Services & Lits'],
