@@ -136,13 +136,23 @@ peut saisir/modifier les informations de l'hôpital dans **Paramètres → Hôpi
 
 ## Écran de démarrage et console ADMIN global
 
-Au démarrage, l'application affiche **trois boutons** :
+Au démarrage, l'application affiche **Compte utilisateur** et **Quitter**
+(le bouton « COMPTE ADMIN (global) » reste **masqué par défaut** — voir la note
+ci-dessous sur l'accès).
 
 | Bouton                  | Rôle                                                                 |
 |-------------------------|----------------------------------------------------------------------|
 | **Compte utilisateur**  | Connexion d'un utilisateur d'un établissement (saisie du **nom** de l'établissement en mode cloud). |
 | **COMPTE ADMIN (global)** | Connexion au **compte maître** (`FAMA` / `aminatN1FA@`) puis console de gestion de tous les établissements. |
 | **Quitter**             | Ferme l'onglet / la fenêtre.                                         |
+
+> **Accès masqué par défaut.** Le bouton « COMPTE ADMIN (global) » est caché
+> pour ne pas exposer l'entrée maître sur les postes de la clinique :
+> - **Bureau** : presser `Ctrl` + `Shift` + `A` pour l'afficher / le masquer.
+> - **Mobile / tablette** : maintenir le doigt **~1,5 s sur le logo** de l'écran
+>   d'accueil pour l'afficher / le masquer (le geste s'annule si le doigt bouge
+>   avant le seuil). Un appui long sur un ordinateur sans clavier donne accès à
+>   la même bascule.
 
 ### Multi-établissements (mode cloud)
 

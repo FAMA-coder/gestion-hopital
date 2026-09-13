@@ -69,7 +69,20 @@ body {
     font-size: 64px;
     color: var(--primary);
     margin-bottom: 8px;
+    touch-action: manipulation;
 }
+
+.launch-admin-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.login-logo.press-hold {
+    transform: scale(0.9);
+}
+
+.login-logo { transition: transform .15s ease; }
 
 .login-header h1 {
     font-size: 24px;

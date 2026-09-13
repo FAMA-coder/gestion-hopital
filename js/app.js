@@ -108,6 +108,7 @@ async function runApp() {
         setupLogoutHandler();
         setupExitSupervisionHandler();
         setupAdminShortcut();
+        setupAdminTouchLaunch();
         setupModalClose();
         setupDateDisplay();
         setupMobileNav();
@@ -167,21 +168,58 @@ function setupLaunchHandler() {
     document.getElementById('btn-global-back').addEventListener('click', showLaunch);
 }
 
-// Masquer / afficher le bouton "COMPTE ADMIN (global)".
-// Raccourci clavier : Ctrl + Shift + A (masque par defaut).
+// --- Strategie d'affichage/masquage du bouton "COMPTE ADMIN (global)" ---
+// Masque par defaut. Deux acces :
+//   - Bureau : raccourci clavier Ctrl + Shift + A.
+//   - Mobile / tablette : appui long (1,5 s) sur le logo de l'ecran de demarrage
+//     (pas de clavier fiable sur tactile). Un appui long affiche/masque le bouton
+//     et sa ligne d'aide ; le geste s'annule si le doigt bouge avant le seuil.
+var __adminBtnVisible = false;
+function toggleAdminButton(state) {
+    const btn = document.getElementById('launch-admin');
+    if (!btn) return false;
+    __adminBtnVisible = (state === undefined) ? !__adminBtnVisible : !!state;
+    btn.style.display = __adminBtnVisible ? 'block' : 'none';
+    const hint = document.getElementById('launch-admin-hint');
+    if (hint) hint.hidden = !__adminBtnVisible;
+    return __adminBtnVisible;
+}
+
 function setupAdminShortcut() {
     const btn = document.getElementById('launch-admin');
-    let visible = false;
-    btn.style.display = 'none';
+    if (!btn) return;
+    toggleAdminButton(false);
     window.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey && e.shiftKey)) return;
-        const key = String(e.key || '').toLowerCase();
-        if (key !== 'a') return;
+        if (String(e.key || '').toLowerCase() !== 'a') return;
         e.preventDefault();
         e.stopPropagation();
-        visible = !visible;
-        btn.style.display = visible ? 'block' : 'none';
+        toggleAdminButton();
     });
+}
+
+var ADMIN_HOLD_MS = 1500;
+function setupAdminTouchLaunch() {
+    const logo = document.querySelector('#launch-screen .login-logo');
+    if (!logo) return;
+    let timer = null, fired = false;
+    const clearHold = () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+        logo.classList.remove('press-hold');
+    };
+    logo.addEventListener('touchstart', () => {
+        fired = false;
+        logo.classList.add('press-hold');
+        timer = setTimeout(() => {
+            timer = null;
+            fired = true;
+            logo.classList.remove('press-hold');
+            toggleAdminButton();
+        }, ADMIN_HOLD_MS);
+    }, { passive: true });
+    logo.addEventListener('touchmove', clearHold, { passive: true });
+    logo.addEventListener('touchend', clearHold);
+    logo.addEventListener('touchcancel', clearHold);
 }
 
 // Champ du nom d'etablissement dans le formulaire de connexion utilisateur.
