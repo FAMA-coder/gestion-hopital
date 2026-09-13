@@ -223,6 +223,23 @@ const DB = (function () {
 
             if (mode === 'cloud' && window.RemoteDB) {
                 this._backend = window.RemoteDB;
+                await this._backend.init();
+
+                // Ouverture directe d'un fichier (file://) : une base
+                // centrale distante n'est pas garantie (et typiquement
+                // hors ligne) -> bascule automatique en mode local.
+                if (typeof location !== 'undefined' && location.protocol === 'file:') {
+                    this._useLocal('Mode local: acces fichier (file://). Donnees stockees sur ce poste.');
+                } else {
+                    // Premier contact reseau (authentification anonyme).
+                    // En cas d'absence de connexion -> repli local.
+                    const ok = await this._probeCloud(6000);
+                    if (ok) {
+                        this._mode = 'cloud';
+                    } else {
+                        this._useLocal('Mode local: sans connexion a la base centrale. Utilisez l\'application en ligne pour la base partagee.');
+                    }
+                }
             } else {
                 if (mode === 'cloud' && typeof Logger !== 'undefined') {
                     Logger.warn('DB', 'Mode cloud demande mais js/remote_db.js absent; bascule local');
@@ -232,6 +249,29 @@ const DB = (function () {
             }
             await this._backend.init();
             return true;
+        },
+
+        // Sonde rapide du backend distant : reussit si le premier appel
+        // reseau aboutit dans le delai imparti, echoue sinon/timeout.
+        async _probeCloud(ms) {
+            try {
+                const p = (window.RemoteDB && window.RemoteDB.probe) ? window.RemoteDB.probe() : true;
+                await Promise.race([
+                    Promise.resolve(p),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+                ]);
+                return true;
+            } catch (e) {
+                if (typeof Logger !== 'undefined') Logger.warn('DB', 'Backend distant indisponible: ' + e.message);
+                return false;
+            }
+        },
+
+        _useLocal(msg) {
+            if (typeof Logger !== 'undefined') Logger.warn('DB', 'Bascule en mode local.');
+            if (window.UI && UI.toast) UI.toast(msg, 'warning');
+            this._backend = Local;
+            this._mode = 'local';
         },
 
         async getAll(storeName) {

@@ -189,7 +189,7 @@ function setupAdminShortcut() {
 // le masque en mode local (IndexedDB, sans registre central).
 async function loadHospitalSelect() {
     const input = document.getElementById('login-hopital');
-    const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
+    const isCloud = !!(window.DB && DB.mode() === 'cloud');
     const group = document.getElementById('login-hopital-group');
     if (!input || !group) return;
     if (!isCloud) {
@@ -258,7 +258,7 @@ function setupLoginHandler() {
         const submitBtn = document.getElementById('login-submit');
         const original = submitBtn.innerHTML;
 
-        const isCloud = !!(window.APP_CONFIG && APP_CONFIG.MODE === 'cloud');
+        const isCloud = !!(window.DB && DB.mode() === 'cloud');
         const typedName = document.getElementById('login-hopital').value;
         let tid = null;
         if (isCloud && !typedName) {

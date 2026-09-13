@@ -346,6 +346,13 @@ const RemoteDB = (function () {
             return this.impl;
         },
 
+        // Premier contact reseau utilise comme sonde de disponibilite.
+        async probe() {
+            if (!this.impl) return true;
+            if (this.impl._auth) return this.impl._auth();
+            return true;
+        },
+
         async getAll(store) { return this._need().getAll(store); },
         async get(store, key) { return this._need().get(store, key); },
         async put(store, data) { return this._need().put(store, data); },
