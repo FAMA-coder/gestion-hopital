@@ -2,3 +2,7 @@
 build/.synchro/
 build/*.log
 .synchro/
+
+# Fichiers internes : restent dans le projet local, jamais publies sur le site
+build/serveur.ps1
+cloud/DEPLOIEMENT.md
