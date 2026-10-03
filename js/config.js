@@ -50,6 +50,33 @@ const APP_CONFIG = {
         login: 'FAMA',
         passHash: '21ee22b2761b19fd2777e370b936f216cec013b4c0048ff5b0a468234a796cf2',
         nom: 'Compte Maitre'
+    },
+
+    // ----- Comptes de demonstration (empreintes SHA-256) -----
+    // Meme principe que GLOBAL_ADMIN : aucun mot de passe en clair dans
+    // les fichiers servis. Ces comptes sont livres avec des donnees de
+    // demonstration ; leurs mots de passe restent notes dans un fichier
+    // local non publie (build/mots-de-passe.txt).
+    //
+    // Rappel : « admin » est reinitialise a cette empreinte a chaque
+    // demarrage (SampleData.ensureAdmin). Tout changement de mot de passe
+    // fait dans Parametres -> Utilisateurs est donc annule au redemarrage :
+    // c'est le comportement historique, preserve ici.
+    //
+    // Changer un mot de passe = remplacer l'empreinte par
+    // SHA-256 du nouveau mot de passe (en minuscules, 64 caracteres).
+    COMPTES_DEMO: {
+        admin: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+        dr_mukendi: '2e4e70b3503b8b88bb6e7ace3b31c61b541adaf83db4e6313b6550ad01284b18',
+        dr_kabila: '2e4e70b3503b8b88bb6e7ace3b31c61b541adaf83db4e6313b6550ad01284b18',
+        dr_lukusa: '2e4e70b3503b8b88bb6e7ace3b31c61b541adaf83db4e6313b6550ad01284b18',
+        dr_chirurgien: '2e4e70b3503b8b88bb6e7ace3b31c61b541adaf83db4e6313b6550ad01284b18',
+        infirmier1: '46eaec71494d8585c7921b037038c9cc996ab67f3c51cc4488e69f13f327ddcf',
+        pharmacie: '47a0df34426c6c34a4ee69b75e8a5c31872cddc43df8fbe5d84a020ca5a3c623',
+        laboratoire: '3705b578e8fcb1b82a94ad917881ec248bbd4111645e91aed3c19af12d82116f',
+        radiologue: '4dc732eea7c619844f36f757216665499aff03a701c131fa6ca3995db645d4c5',
+        caissier: '996ceb701a2aee908aa326b07f38768e16ccf99e621bd2319e46b19319391200',
+        secretaire: 'ee63c6506c68d4613b9553820393f22db66a1dbc9ba6dc5640df9fce741e6258'
     }
 };
 

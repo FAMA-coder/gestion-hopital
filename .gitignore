@@ -5,4 +5,5 @@ build/*.log
 
 # Fichiers internes : restent dans le projet local, jamais publies sur le site
 build/serveur.ps1
+build/mots-de-passe.txt
 cloud/DEPLOIEMENT.md

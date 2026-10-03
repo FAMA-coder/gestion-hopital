@@ -1,8 +1,21 @@
 const diagnosticsUrgences = ['Traumatisme', 'Fievre typhoide', 'Paludisme severe', 'Crise asthmatique', 'Intoxication alimentaire', 'Brulure thermique', 'Shock hypovolemique', 'Infarctus', 'AVC', 'Fracture'];
 
 const SampleData = {
+    // Empreinte des mots de passe des comptes de demonstration :
+    // source unique de verite = APP_CONFIG.COMPTES_DEMO (jamais en clair).
+    // Retourne '' si l'empreinte est absente ou invalide : le compte
+    // correspondant n'est alors pas cree, plutot que cree sans mot de passe.
+    demoHash(username) {
+        const h = String((window.APP_CONFIG || {}).COMPTES_DEMO?.[username] || '').trim().toLowerCase();
+        return /^[0-9a-f]{64}$/.test(h) ? h : '';
+    },
+
     async ensureAdmin() {
-        const adminHash = Auth.hashPassword('admin123');
+        const adminHash = this.demoHash('admin');
+        if (!adminHash) {
+            Logger.warn('SampleData', 'Compte admin non configure (COMPTES_DEMO.admin absent de js/config.js) : aucun compte cree.');
+            return;
+        }
         const users = await DB.getAll('users');
         let admin = users.find(u => u.nomUtilisateur === 'admin');
         if (admin) {
@@ -110,20 +123,29 @@ const SampleData = {
     },
 
     async seedUsers() {
-        const users = [
+        // Empreintes issues de js/config.js (COMPTES_DEMO).
+        // Aucun mot de passe en clair dans le code servi.
+        const h = u => this.demoHash(u);
+        const comptes = [
             { id: 'um', nomUtilisateur: 'FAMA', motDePasse: this.masterHash(), nomComplet: 'Super Administrateur', role: 'admin', maitre: true, actif: true },
-            { id: 'u1', nomUtilisateur: 'admin', motDePasse: Auth.hashPassword('admin123'), nomComplet: 'Admin General', role: 'admin', actif: true },
-            { id: 'u2', nomUtilisateur: 'dr_mukendi', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Mukendi Kasongo', role: 'medecin', serviceId: 'svc1', actif: true },
-            { id: 'u3', nomUtilisateur: 'dr_kabila', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Kabila Tshisekedi', role: 'medecin', serviceId: 'svc2', actif: true },
-            { id: 'u4', nomUtilisateur: 'dr_lukusa', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Lukusa Mbuyi', role: 'medecin', serviceId: 'svc3', actif: true },
-            { id: 'u5', nomUtilisateur: 'infirmier1', motDePasse: Auth.hashPassword('inf123'), nomComplet: 'Ntumba Kalala', role: 'infirmier', serviceId: 'svc1', actif: true },
-            { id: 'u6', nomUtilisateur: 'pharmacie', motDePasse: Auth.hashPassword('pharm123'), nomComplet: 'Mutombo Tshala', role: 'pharmacien', actif: true },
-            { id: 'u7', nomUtilisateur: 'laboratoire', motDePasse: Auth.hashPassword('lab123'), nomComplet: 'Ilunga Kabongo', role: 'laborantin', actif: true },
-            { id: 'u8', nomUtilisateur: 'caissier', motDePasse: Auth.hashPassword('cais123'), nomComplet: 'Mwamba Kasongo', role: 'caissier', actif: true },
-            { id: 'u9', nomUtilisateur: 'secretaire', motDePasse: Auth.hashPassword('sec123'), nomComplet: 'Kabamba Mwamba', role: 'secretaire', actif: true },
-            { id: 'u10', nomUtilisateur: 'dr_chirurgien', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Ngoy Kabongo', role: 'chirurgien', serviceId: 'svc2', actif: true },
-            { id: 'u11', nomUtilisateur: 'radiologue', motDePasse: Auth.hashPassword('rad123'), nomComplet: 'Dr. Tshilombo Kasongo', role: 'radiologue', serviceId: 'svc5', actif: true }
+            { id: 'u1', nomUtilisateur: 'admin', motDePasse: h('admin'), nomComplet: 'Admin General', role: 'admin', actif: true },
+            { id: 'u2', nomUtilisateur: 'dr_mukendi', motDePasse: h('dr_mukendi'), nomComplet: 'Dr. Mukendi Kasongo', role: 'medecin', serviceId: 'svc1', actif: true },
+            { id: 'u3', nomUtilisateur: 'dr_kabila', motDePasse: h('dr_kabila'), nomComplet: 'Dr. Kabila Tshisekedi', role: 'medecin', serviceId: 'svc2', actif: true },
+            { id: 'u4', nomUtilisateur: 'dr_lukusa', motDePasse: h('dr_lukusa'), nomComplet: 'Dr. Lukusa Mbuyi', role: 'medecin', serviceId: 'svc3', actif: true },
+            { id: 'u5', nomUtilisateur: 'infirmier1', motDePasse: h('infirmier1'), nomComplet: 'Ntumba Kalala', role: 'infirmier', serviceId: 'svc1', actif: true },
+            { id: 'u6', nomUtilisateur: 'pharmacie', motDePasse: h('pharmacie'), nomComplet: 'Mutombo Tshala', role: 'pharmacien', actif: true },
+            { id: 'u7', nomUtilisateur: 'laboratoire', motDePasse: h('laboratoire'), nomComplet: 'Ilunga Kabongo', role: 'laborantin', actif: true },
+            { id: 'u8', nomUtilisateur: 'caissier', motDePasse: h('caissier'), nomComplet: 'Mwamba Kasongo', role: 'caissier', actif: true },
+            { id: 'u9', nomUtilisateur: 'secretaire', motDePasse: h('secretaire'), nomComplet: 'Kabamba Mwamba', role: 'secretaire', actif: true },
+            { id: 'u10', nomUtilisateur: 'dr_chirurgien', motDePasse: h('dr_chirurgien'), nomComplet: 'Dr. Ngoy Kabongo', role: 'chirurgien', serviceId: 'svc2', actif: true },
+            { id: 'u11', nomUtilisateur: 'radiologue', motDePasse: h('radiologue'), nomComplet: 'Dr. Tshilombo Kasongo', role: 'radiologue', serviceId: 'svc5', actif: true }
         ];
+        // Un compte sans empreinte exploitable ne doit jamais etre cree.
+        const sansEmpreinte = comptes.filter(u => !/^[0-9a-f]{64}$/.test(String(u.motDePasse || '')));
+        if (sansEmpreinte.length) {
+            Logger.warn('SampleData', 'Comptes ignores (empreinte absente de js/config.js) : ' + sansEmpreinte.map(u => u.nomUtilisateur).join(', ') + '.');
+        }
+        const users = comptes.filter(u => /^[0-9a-f]{64}$/.test(String(u.motDePasse || '')));
         await DB.putAll('users', users);
     },
 
@@ -840,11 +862,14 @@ const SampleData = {
         await this.ensureMaitre();
 
         const admin = users.find(u => u.nomUtilisateur === 'admin');
-        if (!admin) {
-            await DB.put('users', { id: DB.generateId(), nomUtilisateur: 'admin', motDePasse: Auth.hashPassword('admin123'), nomComplet: 'Admin General', role: 'admin', actif: true });
-        } else if (admin.motDePasse !== Auth.hashPassword('admin123')) {
-            admin.motDePasse = Auth.hashPassword('admin123');
-            await DB.put('users', admin);
+        const adminHash = this.demoHash('admin');
+        if (adminHash) {
+            if (!admin) {
+                await DB.put('users', { id: DB.generateId(), nomUtilisateur: 'admin', motDePasse: adminHash, nomComplet: 'Admin General', role: 'admin', actif: true });
+            } else if (admin.motDePasse !== adminHash) {
+                admin.motDePasse = adminHash;
+                await DB.put('users', admin);
+            }
         }
 
         const gardes = await DB.getAll('planningPersonnel');

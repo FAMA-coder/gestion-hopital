@@ -16,20 +16,37 @@ Alternative manuelle : lancer un serveur statique a la racine du projet, par exe
 
 ## Identifiants par defaut
 
-| Utilisateur | Mot de passe | Role |
-|-------------|-------------|------|
-| admin | admin123 | Administrateur |
-| dr_mukendi | med123 | Medecin |
-| dr_kabila | med123 | Medecin |
-| dr_lukusa | med123 | Medecin |
-| dr_chirurgien | med123 | Chirurgien |
-| infirmier1 | inf123 | Infirmier |
-| pharmacie | pharm123 | Pharmacien |
-| laboratoire | lab123 | Laborantin |
-| radiologue | rad123 | Radiologue |
-| caissier | cais123 | Caissier |
-| secretaire | sec123 | Secretaire |
-| directeur | - | Directeur (ajouter manuellement) |
+Les mots de passe ne figure **plus en clair** dans les fichiers servis : chaque
+compte est stocke sous forme d'empreinte SHA-256 dans `js/config.js`
+(`COMPTES_DEMO`, et `GLOBAL_ADMIN` pour le compte maitre `FAMA`).
+
+Les mots de passe de demonstration sont notes dans un fichier **local et non
+publie** : `build/mots-de-passe.txt` (le serveur local renvoie 403 sur `build/`,
+et le fichier est absent du depot Git). Ne pas le copier dans un depot ni le
+diffuser.
+
+| Utilisateur | Role |
+|-------------|------|
+| FAMA | Compte maitre (bouton « COMPTE ADMIN » de l'ecran de demarrage) |
+| admin | Administrateur de l'hopital |
+| dr_mukendi, dr_kabila, dr_lukusa | Medecin |
+| dr_chirurgien | Chirurgien |
+| infirmier1 | Infirmier |
+| pharmacie | Pharmacien |
+| laboratoire | Laborantin |
+| radiologue | Radiologue |
+| caissier | Caissier |
+| secretaire | Secretaire |
+| directeur | Directeur (a creer manuellement dans Parametres -> Utilisateurs) |
+
+Les comptes crees dans Parametres -> Utilisateurs gardent le mot de passe choisi
+(mis en SHA-256 a la creation). Seul `admin` est reinitialise a son empreinte de
+configuration a chaque demarrage, pour garantir qu'un poste fraichement installe
+puisse se connecter.
+
+Pour changer un mot de passe de demonstration : remplacer l'empreinte dans
+`js/config.js` par `SHA-256 du nouveau mot de passe` (minuscules, 64 caracteres),
+puis relancer `Mettre-a-jour.bat` sur les postes installes.
 
 ## Modules
 
