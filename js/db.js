@@ -274,6 +274,18 @@ const DB = (function () {
             this._mode = 'local';
         },
 
+        // Prevenir les couches de synchronisation (en ligne et reseau
+        // local) qu'une ecriture locale vient d'avoir lieu. Elles
+        // ignorent les imports recus d'un autre poste (garde interne).
+        _notify() {
+            try {
+                if (window.Sync && Sync.changed) Sync.changed();
+            } catch (e) { /* synchronisation indisponible */ }
+            try {
+                if (window.LanSync && LanSync.changed) LanSync.changed();
+            } catch (e) { /* synchronisation indisponible */ }
+        },
+
         async getAll(storeName) {
             return this._backend.getAll(storeName);
         },
@@ -281,16 +293,24 @@ const DB = (function () {
             return this._backend.get(storeName, key);
         },
         async put(storeName, data) {
-            return this._backend.put(storeName, data);
+            const r = await this._backend.put(storeName, data);
+            this._notify();
+            return r;
         },
         async putAll(storeName, items) {
-            return this._backend.putAll(storeName, items);
+            const r = await this._backend.putAll(storeName, items);
+            this._notify();
+            return r;
         },
         async delete(storeName, key) {
-            return this._backend.delete(storeName, key);
+            const r = await this._backend.delete(storeName, key);
+            this._notify();
+            return r;
         },
         async clear(storeName) {
-            return this._backend.clear(storeName);
+            const r = await this._backend.clear(storeName);
+            this._notify();
+            return r;
         },
         async count(storeName) {
             return this._backend.count(storeName);

@@ -103,6 +103,68 @@ const Auth = {
         if (!this._effPerms) return false;
         return (this._effPerms[module] || 0) >= level;
     },
+
+    // Recalcule les permissions sans laisser remonter d'erreur : la
+    // base peut etre momentanement inaccessible (mode hors ligne,
+    // synchronisation en cours). Dans ce cas les droits restent
+    // denies, ce qui est preferable a une porte ouverte.
+    async safeRefreshPermissions() {
+        try {
+            await this.refreshPermissions();
+            return true;
+        } catch (e) {
+            this._effPerms = null;
+            if (window.Logger) Logger.warn('Auth', 'Permissions non rechargees', String((e && e.message) || e));
+            return false;
+        }
+    },
+
+    // Revalide la session apres une synchronisation : les donnees
+    // viennent peut-etre d'un autre poste, ou le compte a ete
+    // supprime, desactive, ou son role a change entre-temps.
+    // Un compte introuvable ou desactive => deconnexion (le poste
+    // ne doit pas rester connecte avec des droits perimes).
+    async revalidateSession() {
+        this._effPerms = null;
+        const u = this.currentUser;
+        if (!u) return { valid: false, reason: 'aucune session' };
+
+        // Session de supervision : le compte reels n'est pas celui
+        // de l'etablissement consulte, rien a revalider ici.
+        if (u.supervision === true || u.id === 'superglobal') {
+            await this.safeRefreshPermissions();
+            return { valid: true };
+        }
+
+        let row = null;
+        try {
+            row = (await DB.getAll('users')).find(x => x.id === u.id) || null;
+        } catch (e) {
+            // Base momentanement inaccessible : on garde la session
+            // (les permissions restent denies tant qu'elles ne sont
+            // pas rechargees).
+            return { valid: true, reason: 'base inaccessible' };
+        }
+
+        if (!row) {
+            this.logout();
+            return { valid: false, reason: 'supprime' };
+        }
+        if (row.actif === false) {
+            this.logout();
+            return { valid: false, reason: 'desactive' };
+        }
+
+        u.nomUtilisateur = row.nomUtilisateur;
+        u.nomComplet = row.nomComplet;
+        u.role = row.role;
+        u.serviceId = row.serviceId;
+        u.maitre = row.maitre === true;
+        u.permissions = row.permissions || null;
+        try { localStorage.setItem(this.SESSION_KEY, JSON.stringify(u)); } catch (e) { /* session non persistee */ }
+        await this.safeRefreshPermissions();
+        return { valid: true, role: u.role };
+    },
     async login(username, password) {
         const users = await DB.getAll('users');
         const loginName = String(username || '').trim().toLowerCase();

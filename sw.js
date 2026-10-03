@@ -3,7 +3,7 @@
    Strategie : cache-first pour les ressources statiques (shell)
    + reseau en secours ; les donnees restent dans IndexedDB.
    ============================================================ */
-const VERSION = 'gesthopital-v11';
+const VERSION = 'gesthopital-v13';
 const PRECACHE = [
   './index.html',
   './manifest.json',
@@ -15,6 +15,8 @@ const PRECACHE = [
   'js/meta.js',
   'js/storage.js',
 'js/auto_backup.js',
+  'js/sync.js',
+  'js/lan.js',
     'js/config.js',
     'js/remote_db.js',
     'js/tenant.js',
@@ -82,6 +84,9 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // Endpoints de synchronisation reseau local : jamais mis en cache
+  // (reponses dynamiques, et le secret figure dans la requete).
+  if (url.pathname.indexOf('/__sync/') === 0) return;
 
   event.respondWith(
     caches.match(req).then((cached) => {

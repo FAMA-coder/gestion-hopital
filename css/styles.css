@@ -320,6 +320,33 @@ body {
 
 .current-date { font-size: 13px; color: var(--text-secondary); }
 
+/* Indicateur de synchronisation (en ligne ou reseau local) */
+.sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    cursor: default;
+}
+.sync-indicator::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.sync-ok { color: var(--success); border-color: var(--success); background: var(--success-light); }
+.sync-off { color: var(--text-secondary); }
+.sync-err { color: var(--danger); border-color: var(--danger); background: var(--danger-light); }
+.sync-na { color: var(--info); border-color: var(--info); background: var(--info-light); }
+
 .content-area {
     flex: 1;
     overflow-y: auto;
@@ -946,6 +973,7 @@ tbody tr:last-child td { border-bottom: none; }
 
     .top-bar-right { gap: 6px; }
     .current-date { display: none; }
+    .sync-indicator { font-size: 11px; padding: 3px 8px; }
     .page-title { font-size: 15px; }
     .btn { padding: 8px 12px; }
 

@@ -16,6 +16,8 @@ const SCRIPT_FILES = [
     'js/meta.js',
     'js/storage.js',
     'js/auto_backup.js',
+    'js/sync.js',
+    'js/lan.js',
     'js/excel.js',
     'js/charts.js',
     'js/print.js',
@@ -270,6 +272,8 @@ async function showApp() {
     registerModules();
     Router.init();
     AutoBackup.init();
+    if (window.Sync && Sync.init) Sync.init();
+    if (window.LanSync && LanSync.start) LanSync.start();
 }
 
 async function applyBranding() {
@@ -464,6 +468,85 @@ function registerModules() {
         }
     });
 }
+
+// ============================================================
+//  App : actions communes a l'ensemble de l'application
+// ============================================================
+const App = {
+    // Appelee par la synchronisation (en ligne ou reseau local) une
+    // fois les donnees d'un autre poste integrees : on rafraichit
+    // l'ecran affiche plutot que de recharger la page, afin de
+    // conserver la navigation et la session en cours.
+    async afterSync() {
+        try {
+            setupDateDisplay();
+
+            // Les donnees viennent peut-etre d'un autre poste : la
+            // session est revalidee ici (compte supprime, desactive,
+            // role modifie) plutot que dans chaque module de synchro.
+            let session = { valid: true };
+            if (window.Auth && Auth.revalidateSession) {
+                session = await Auth.revalidateSession();
+            }
+            if (!session.valid) {
+                this.sessionLost(session.reason);
+                return;
+            }
+            // Rôle ou nom de poste eventuellement modifies : la barre
+            // superieure doit suivre.
+            if (window.Auth && Auth.currentUser) {
+                const roleEl = document.getElementById('user-role');
+                if (roleEl) roleEl.textContent = Auth.getRoleLabel();
+                const av = document.getElementById('user-avatar');
+                if (av && Auth.currentUser.nomComplet) {
+                    av.textContent = Auth.currentUser.nomComplet.charAt(0).toUpperCase();
+                }
+            }
+            setupNavPermissions();
+
+            const hopital = await Meta.getHopital();
+            const hid = document.getElementById('user-hospital');
+            if (hid) hid.textContent = (hopital && hopital.nom) ? hopital.nom : '';
+            await applyBranding();
+            if (window.Sync && Sync.render) Sync.render();
+            if (window.LanSync && LanSync.render) LanSync.render();
+
+            const overlay = document.getElementById('modal-overlay');
+            if (overlay && overlay.style.display === 'flex') return; // formulaire en cours
+
+            const current = Router.currentModule;
+            // Parametres contient des formulaires de saisie : un
+            // re-rendu effacerait les champs non encore enregistres.
+            if (current === 'parametres') return;
+            const mod = current ? Router.modules[current] : null;
+            if (mod && mod.show) {
+                if (mod.cleanup) mod.cleanup();
+                await mod.show();
+            }
+        } catch (err) {
+            if (window.Logger) Logger.warn('App', 'Rafraichissement de l\'ecran incomplet', err);
+        }
+    },
+
+    // La session n'existe plus cote donnees (compte supprime ou
+    // desactive depuis un autre poste) : on ferme proprement
+    // l'application plutot que de laisser un acces avec des
+    // droits perimes.
+    sessionLost(reason) {
+        const msg = (reason === 'desactive')
+            ? 'Votre compte a ete desactive depuis un autre poste.'
+            : 'Votre compte a ete supprime depuis un autre poste.';
+        try { UI.hideModal(); } catch (e) { /* aucun formulaire ouvert */ }
+        if (window.Sync && Sync.stop) Sync.stop();
+        if (window.LanSync && LanSync.stop) LanSync.stop();
+        if (typeof showUserLogin === 'function') showUserLogin();
+        else document.getElementById('login-screen').style.display = 'flex';
+        UI.toast(msg, 'error');
+        if (window.Logger) Logger.warn('Auth', 'Session fermee apres synchronisation', reason);
+    }
+};
+
+window.App = App;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startApp);

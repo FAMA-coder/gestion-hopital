@@ -11,6 +11,7 @@ const parametresModule = {
                 <button class="tab ${this.tab === 'utilisateurs' ? 'active' : ''}" data-tab="utilisateurs">Utilisateurs</button>
                 <button class="tab ${this.tab === 'permissions' ? 'active' : ''}" data-tab="permissions">Permissions</button>
                 <button class="tab ${this.tab === 'sauvegarde' ? 'active' : ''}" data-tab="sauvegarde">Sauvegarde</button>
+                <button class="tab ${this.tab === 'synchro' ? 'active' : ''}" data-tab="synchro">Synchro</button>
                 <button class="tab ${this.tab === 'journal' ? 'active' : ''}" data-tab="journal">Journal</button>
             </div>
             <div id="params-content"></div>
@@ -33,6 +34,7 @@ const parametresModule = {
         else if (this.tab === 'utilisateurs') await this.renderUtilisateurs(content);
         else if (this.tab === 'permissions') await this.renderPermissions(content);
         else if (this.tab === 'sauvegarde') await this.renderSauvegarde(content);
+        else if (this.tab === 'synchro') await this.renderSynchro(content);
         else await this.renderJournal(content);
     },
 
@@ -726,6 +728,216 @@ const parametresModule = {
         const headers = ['Nom', 'Forme', 'Dosage', 'Categorie', 'Stock', 'Stock Min', 'Prix Achat', 'Prix Vente', 'Peremption', 'Fournisseur'];
         const rows = meds.map(m => [m.nom, m.forme, m.dosage, m.categorie, m.stockActuel, m.stockMin, m.prixAchat, m.prixVente, m.datePeremption, m.fournisseur]);
         Excel.exportToCSV(headers, rows, 'medicaments');
+    },
+
+    // ============================================================
+    //  Onglet Synchro : deux mecanismes complementaires
+    //  - « En ligne » : mode cloud. Les donnees sont dans la base
+    //    centrale ; un marqueur indique aux autres postes qu'une
+    //    donnee a change, et l'ecran se rafraichit.
+    //  - « Reseau local » : mode local (IndexedDB). Un poste
+    //    heberge l'image des donnees, les autres s'y connectent.
+    // ============================================================
+    // Les valeurs de configuration sont saisies par un administrateur
+    // mais proviennent du stockage local : on les echappe avant de
+    // les injecter dans une balise.
+    _attr(v) {
+        return String(v === undefined || v === null ? '' : v)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    },
+
+    async renderSynchro(container) {
+        const canEdit = Auth.can('parametres', 3);
+        const s = Sync.getConfig();
+        const l = LanSync.getConfig();
+        const onlineOk = Sync.supported();
+        const lanOk = LanSync.supported();
+        const fmt = (iso) => iso ? new Date(iso).toLocaleString('fr-FR') : '-';
+
+        container.innerHTML = `
+            ${canEdit ? '' : '<div style="padding:10px 12px;margin-bottom:16px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:13px">Consultation seule : la synchronisation ne peut etre configuree que par un administrateur.</div>'}
+
+            <div class="card">
+                <div class="card-header"><h3>Synchro en ligne (internet)</h3></div>
+                <div style="padding:14px 16px">
+                    <p style="color:var(--text-secondary);margin-bottom:14px">
+                        Mode cloud : les donnees sont dejà dans la base centrale partagee. Chaque poste y ecrit
+                        directement ; la synchronisation sert a signaler les modifications aux autres postes pour
+                        que leurs ecrans se rafraichissent automatiquement.
+                    </p>
+                    ${onlineOk ? '' : '<div style="padding:10px 12px;margin-bottom:14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:13px">Non applicable : l\'application tourne en mode local (IndexedDB). Utilisez la section « Reseau local » ci-dessous, ou CONNECTEZ-VOUS depuis l\'adresse en ligne de l\'application.</div>'}
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sync-online-enabled" ${s.enabled ? 'checked' : ''} ${canEdit ? '' : 'disabled'}>
+                            Activer la synchronisation en ligne
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-online-poste">Nom de ce poste</label>
+                        <input type="text" id="sync-online-poste" value="${this._attr(s.poste)}" placeholder="Poste 1 - Reception" maxlength="60" ${canEdit ? '' : 'disabled'}>
+                        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">Nom lisible par les autres postes (qui a modifie les donnees).</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-online-folder">Dossier de synchronisation</label>
+                        <input type="text" id="sync-online-folder" value="${this._attr(s.folder)}" maxlength="60" ${canEdit ? '' : 'disabled'}>
+                        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">Doit etre identique sur tous les postes de l'etablissement. Par defaut : <code>hopital</code>.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-online-interval">Frequence de verification</label>
+                        <select id="sync-online-interval" ${canEdit ? '' : 'disabled'}>
+                            ${[5, 10, 15, 30, 60, 120].map(v => `<option value="${v}" ${s.interval === v ? 'selected' : ''}>toutes les ${v} secondes</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="parametresModule.saveSynchroOnline()" ${canEdit ? '' : 'disabled'}>Enregistrer</button>
+                        <button class="btn btn-outline" onclick="parametresModule.syncNowOnline(this)">Synchroniser maintenant</button>
+                        <button class="btn btn-outline" onclick="parametresModule.testSynchroOnline()">Tester la connexion</button>
+                    </div>
+                    <div id="sync-online-status" style="margin-top:10px;font-size:13px;color:var(--text-secondary);line-height:1.7">
+                        Base centrale : ${Sync.backendLabel()}<br>
+                        Marqueur : <code>${this._attr(Sync.markerPath())}</code><br>
+                        Etat : <strong>${Sync.state === 'error' ? 'erreur' : (s.enabled && onlineOk ? 'active' : 'inactive')}</strong>
+                        - derniere verification : ${fmt(Sync.lastCheck)}<br>
+                        ${Sync.lastError ? 'Derniere erreur : ' + Sync.lastError : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:16px">
+                <div class="card-header"><h3>Synchro reseau local (LAN)</h3></div>
+                <div style="padding:14px 16px">
+                    <p style="color:var(--text-secondary);margin-bottom:14px">
+                        Mode local : chaque poste possede sa propre copie des donnees dans son navigateur. Un poste
+                        demarre le serveur (double-clic sur <code>lancer-reseau.bat</code>) qui heberge la derniere
+                        image ; les autres postes se connectent a ce serveur et echangent leur image. En cas
+                        d'ecarts, la modification la plus recente est conservee.
+                    </p>
+                    ${lanOk ? '' : '<div style="padding:10px 12px;margin-bottom:14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:13px">Non applicable : l\'application est en mode cloud, ou les donnees sont deja partagees par la base centrale.</div>'}
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sync-lan-enabled" ${l.enabled ? 'checked' : ''} ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                            Activer la synchronisation reseau local
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-lan-poste">Nom de ce poste</label>
+                        <input type="text" id="sync-lan-poste" value="${this._attr(l.poste)}" placeholder="Poste 1 - Reception" maxlength="60" ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">Indique au poste serveur qui a envoye la derniere image (visible dans sa fenetre).</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-lan-mode">Role de ce poste</label>
+                        <select id="sync-lan-mode" ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                            <option value="server" ${l.mode === 'server' ? 'selected' : ''}>Poste serveur (heberge les donnees)</option>
+                            <option value="client" ${l.mode === 'client' ? 'selected' : ''}>Poste client (se connecte au poste serveur)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-lan-host">Adresse du poste serveur</label>
+                        <input type="text" id="sync-lan-host" value="${this._attr(l.host)}" placeholder="192.168.1.20" ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">Ignoree en role « Poste serveur » (l'adresse affichee dans sa fenetre est utilisee). Sinon, saisissez l'adresse IP affichee par le poste serveur.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-lan-port">Port</label>
+                        <input type="number" id="sync-lan-port" min="1" max="65535" value="${l.port}" style="width:110px" ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                    </div>
+                    <div class="form-group">
+                        <label for="sync-lan-secret">Secret partage</label>
+                        <input type="password" id="sync-lan-secret" value="${this._attr(l.secret)}" autocomplete="off" ${canEdit ? '' : 'disabled'} ${lanOk ? '' : 'disabled'}>
+                        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">Recopiez le secret affiche dans la fenetre du poste serveur. Il protege l'echange des donnees sur le reseau local.</p>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="parametresModule.saveSynchroLan()" ${canEdit ? '' : 'disabled'}>Enregistrer</button>
+                        <button class="btn btn-outline" onclick="parametresModule.syncNowLan(this)">Synchroniser maintenant</button>
+                        <button class="btn btn-outline" onclick="parametresModule.testSynchroLan()">Tester la connexion</button>
+                    </div>
+                    <div id="sync-lan-status" style="margin-top:10px;font-size:13px;color:var(--text-secondary);line-height:1.7">
+                        Adresse utilisee : <code>${this._attr(LanSync.baseUrl())}</code><br>
+                        Poste : <strong>${this._attr(LanSync.info().poste)}</strong><br>
+                        Etat : <strong>${LanSync.lastError ? 'erreur' : (l.enabled && lanOk ? 'actif' : 'inactif')}</strong>
+                        - derniere verification : ${fmt(LanSync.lastCheck)}<br>
+                        ${LanSync.lastError ? 'Derniere erreur : ' + LanSync.lastError : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:16px">
+                <div class="card-header"><h3>Notes</h3></div>
+                <ul style="margin:10px 0 0;padding-left:20px;line-height:1.8;color:var(--text-secondary);font-size:14px">
+                    <li>Les deux mecanismes sont independants : en ligne pour la base centrale (cloud), reseau local pour les postes sans connexion.</li>
+                    <li>La synchronisation ne remplace pas la sauvegarde : conservez vos fichiers de sauvegarde dans l'onglet <strong>Parametres &gt; Sauvegarde</strong>.</li>
+                    <li>Si un poste est modifie pendant qu'il est hors ligne, sa modification est republiee des le retour de la connexion.</li>
+                    <li>Les changements apportes a la configuration sont propres a ce poste (ils ne sont pas synchronises).</li>
+                </ul>
+            </div>
+        `;
+    },
+
+    async saveSynchroOnline() {
+        if (!Auth.can('parametres', 3)) { UI.toast('Droits insuffisants', 'error'); return; }
+        const folder = document.getElementById('sync-online-folder').value.trim() || 'hopital';
+        if (!/^[A-Za-z0-9_-]{1,60}$/.test(folder)) {
+            UI.toast('Dossier invalide : lettres, chiffres, tiret et soulignement uniquement.', 'error');
+            return;
+        }
+        Sync.setConfig({
+            enabled: document.getElementById('sync-online-enabled').checked,
+            folder: folder,
+            interval: parseInt(document.getElementById('sync-online-interval').value, 10),
+            poste: document.getElementById('sync-online-poste').value.trim()
+        });
+        UI.toast('Configuration de la synchro en ligne enregistree.', 'success');
+        await Auth.log('Modification', 'parametres', 'Synchro en ligne : ' + (Sync.getConfig().enabled ? 'activee' : 'desactivee') + ', dossier ' + folder);
+        this.renderTab();
+    },
+
+    async syncNowOnline(btn) {
+        if (btn) btn.disabled = true;
+        try { await Sync.syncNow(); } finally { if (btn) btn.disabled = false; }
+        this.renderTab();
+    },
+
+    async testSynchroOnline() {
+        UI.toast('Test de la connexion en cours...', 'info');
+        const r = await Sync.test();
+        UI.toast(r.message, r.ok ? 'success' : 'error');
+        await this.renderTab();
+    },
+
+    async saveSynchroLan() {
+        if (!Auth.can('parametres', 3)) { UI.toast('Droits insuffisants', 'error'); return; }
+        const secret = document.getElementById('sync-lan-secret').value;
+        const enabled = document.getElementById('sync-lan-enabled').checked;
+        if (enabled && LanSync.supported() && secret.trim().length < 6) {
+            UI.toast('Renseignez un secret d\'au moins 6 caracteres (affiche par le poste serveur).', 'error');
+            return;
+        }
+        LanSync.setConfig({
+            enabled: enabled,
+            mode: document.getElementById('sync-lan-mode').value,
+            host: document.getElementById('sync-lan-host').value.trim(),
+            port: parseInt(document.getElementById('sync-lan-port').value, 10),
+            secret: secret,
+            poste: document.getElementById('sync-lan-poste').value.trim()
+        });
+        UI.toast('Configuration de la synchro reseau local enregistree.', 'success');
+        await Auth.log('Modification', 'parametres', 'Synchro LAN : ' + (LanSync.getConfig().enabled ? 'activee' : 'desactivee'));
+        this.renderTab();
+    },
+
+    async syncNowLan(btn) {
+        if (btn) btn.disabled = true;
+        try { await LanSync.syncNow(); } finally { if (btn) btn.disabled = false; }
+        this.renderTab();
+    },
+
+    async testSynchroLan() {
+        UI.toast('Test de la connexion en cours...', 'info');
+        const r = await LanSync.test();
+        UI.toast(r.message, r.ok ? 'success' : 'error');
+        await this.renderTab();
     },
 
     cleanup() {}

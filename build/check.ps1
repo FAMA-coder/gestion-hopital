@@ -7,7 +7,11 @@ $hasError = $false
 
 foreach ($file in $jsFiles) {
     $content = Get-Content -LiteralPath $file.FullName -Raw
-    $content = $content -replace '/\*.*?\*/', '' -replace '(?m)//.*?$', ''
+    # Retrait des commentaires avant comptage. « http:// » ou « file:// »
+    # ecrits dans une chaine ne sont pas des commentaires : on exige qu'un
+    # « // » ne soit ni precede de « : » ni d'un guillemet.
+    $content = $content -replace '(?s)/\*.*?\*/', ''
+    $content = [regex]::Replace($content, '(?m)(?<![:"''])//.*$', '')
 
     $open = ([regex]::Matches($content, '\{')).Count
     $close = ([regex]::Matches($content, '\}')).Count

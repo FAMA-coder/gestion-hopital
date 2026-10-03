@@ -1,0 +1,4 @@
+# Donnees de synchronisation locale (secret + image des donnees) : JAMAIS publiees
+build/.synchro/
+build/*.log
+.synchro/
