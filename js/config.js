@@ -37,9 +37,18 @@ const APP_CONFIG = {
     // modification, suppression, supervision, blocage/deblocage) de tous
     // les hopitaux/cliniques de la plateforme. Aucun utilisateur d'hopital
     // ne peut se connecter sur ce compte (compare un hash SHA-256).
+    //
+    // SECURITE : le mot de passe n'existe qu'en SHA-256 ci-dessous. Il ne
+    // figure en clair dans aucun fichier servi (afficher la source ne
+    // donne donc plus acces au compte maitre) :
+    //   - console ADMIN global : comparaison directe avec cette empreinte ;
+    //   - compte « FAMA » de la base : meme empreinte reappliquee au
+    //     demarrage (SampleData.ensureMaitre), comme pour « admin ».
+    // Changer le mot de passe = remplacer cette empreinte par
+    // SHA-256 du nouveau mot de passe (en minuscules, 64 caracteres).
     GLOBAL_ADMIN: {
         login: 'FAMA',
-        passHash: '3bada7c42bc20631daf5274f0d8ff3e82d8ee09b27dffd7828cda01cd3ab9123',
+        passHash: '21ee22b2761b19fd2777e370b936f216cec013b4c0048ff5b0a468234a796cf2',
         nom: 'Compte Maitre'
     }
 };

@@ -33,7 +33,12 @@ const Auth = {
     // Compte maître (super administrateur) : non modifiable et
     // invisible pour tous les autres comptes.
     MASTER_USERNAME: 'FAMA',
-    MASTER_PASSWORD: 'aminatN1FA@',
+    // Son MOT DE PASSE n'est PAS dans ce fichier : il n'existe que sous
+    // forme d'empreinte SHA-256 dans js/config.js
+    // (APP_CONFIG.GLOBAL_ADMIN.passHash), comparee telle quelle par la
+    // console ADMIN global et reappliquee au compte « FAMA » de la base
+    // par SampleData.ensureMaitre(). Afficher la source de l'application
+    // ne donne donc pas le mot de passe.
 
     // Liste des modules et leurs libelles (pour l'interface de permissions)
     MODULES: [

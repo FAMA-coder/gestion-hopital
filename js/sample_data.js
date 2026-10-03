@@ -16,18 +16,35 @@ const SampleData = {
         return true;
     },
 
+    // Empreinte du mot de passe du compte maitre : source unique de
+    // verite = APP_CONFIG.GLOBAL_ADMIN.passHash (jamais en clair).
+    masterHash() {
+        const h = String((window.APP_CONFIG || {}).GLOBAL_ADMIN?.passHash || '').trim().toLowerCase();
+        return /^[0-9a-f]{64}$/.test(h) ? h : '';
+    },
+
     // Compte maître (super administrateur) : cree une seule fois,
     // jamais modifiable ni visible par les autres comptes.
+    // Son mot de passe est reapplique a chaque demarrage depuis
+    // js/config.js (comme « admin ») : changer passHash suffit donc a
+    // changer le mot de passe sur tous les postes et toutes les bases,
+    // y compris celles ou il tournait avant.
     async ensureMaitre() {
+        const hash = this.masterHash();
+        if (!hash) {
+            Logger.warn('SampleData', 'Compte maitre non configure (GLOBAL_ADMIN.passHash absent de js/config.js) : aucun compte cree.');
+            return;
+        }
         const users = await DB.getAll('users');
         const maitre = users.find(u => String(u.nomUtilisateur).toUpperCase() === Auth.MASTER_USERNAME);
         if (maitre) {
-            // Repare uniquement le role, le statut et le drapeau maître.
-            const modifie = !maitre.maitre || maitre.role !== 'admin' || maitre.actif !== true;
+            // Repare le role, le statut, le drapeau maitre et le mot de passe.
+            const modifie = !maitre.maitre || maitre.role !== 'admin' || maitre.actif !== true || maitre.motDePasse !== hash;
             if (modifie) {
                 maitre.maitre = true;
                 maitre.role = 'admin';
                 maitre.actif = true;
+                maitre.motDePasse = hash;
                 await DB.put('users', maitre);
             }
             return;
@@ -35,7 +52,7 @@ const SampleData = {
         await DB.put('users', {
             id: DB.generateId(),
             nomUtilisateur: Auth.MASTER_USERNAME,
-            motDePasse: Auth.hashPassword(Auth.MASTER_PASSWORD),
+            motDePasse: hash,
             nomComplet: 'Super Administrateur',
             role: 'admin',
             maitre: true,
@@ -94,7 +111,7 @@ const SampleData = {
 
     async seedUsers() {
         const users = [
-            { id: 'um', nomUtilisateur: 'FAMA', motDePasse: Auth.hashPassword('aminatN1FA@'), nomComplet: 'Super Administrateur', role: 'admin', maitre: true, actif: true },
+            { id: 'um', nomUtilisateur: 'FAMA', motDePasse: this.masterHash(), nomComplet: 'Super Administrateur', role: 'admin', maitre: true, actif: true },
             { id: 'u1', nomUtilisateur: 'admin', motDePasse: Auth.hashPassword('admin123'), nomComplet: 'Admin General', role: 'admin', actif: true },
             { id: 'u2', nomUtilisateur: 'dr_mukendi', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Mukendi Kasongo', role: 'medecin', serviceId: 'svc1', actif: true },
             { id: 'u3', nomUtilisateur: 'dr_kabila', motDePasse: Auth.hashPassword('med123'), nomComplet: 'Dr. Kabila Tshisekedi', role: 'medecin', serviceId: 'svc2', actif: true },
