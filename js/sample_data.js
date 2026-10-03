@@ -1,6 +1,15 @@
 const diagnosticsUrgences = ['Traumatisme', 'Fievre typhoide', 'Paludisme severe', 'Crise asthmatique', 'Intoxication alimentaire', 'Brulure thermique', 'Shock hypovolemique', 'Infarctus', 'AVC', 'Fracture'];
 
 const SampleData = {
+    // Jeu de demonstration : APP_CONFIG.SEED_DEMO.
+    //   true  (ou absent) => patients, consultations, lits et comptes
+    //                        de demonstration crees au premier lancement ;
+    //   false             => base vide : seuls le compte maitre et le
+    //                        compte admin sont crees / reinitialises.
+    demoActive() {
+        return (window.APP_CONFIG || {}).SEED_DEMO !== false;
+    },
+
     // Empreinte des mots de passe des comptes de demonstration :
     // source unique de verite = APP_CONFIG.COMPTES_DEMO (jamais en clair).
     // Retourne '' si l'empreinte est absente ou invalide : le compte
@@ -93,33 +102,43 @@ const SampleData = {
             anneeCreation: 1985
         });
 
-        await this.seedUsers();
-        await this.ensureMaitre();
-        await this.seedServices();
-        await this.seedPersonnel();
-        await this.seedSallesEtLits();
-        await this.seedTypesExamen();
-        await this.seedTarifs();
-        await this.seedMedicaments();
-        await this.seedPatients();
-        await this.seedConsultations();
-        await this.seedUrgences();
-        await this.seedAdmissions();
-        await this.seedHospitalisations();
-        await this.seedDemandesExamen();
-        await this.seedExamensImagerie();
-        await this.seedOperations();
-        await this.seedFacturations();
-        await this.seedAssurances();
-        await this.seedGardes();
-        await this.seedRemunerations();
-        await this.seedContrats();
-        await this.seedDepenses();
-        await this.seedOrdonnances();
-        await this.seedSuivi();
-        await this.seedParametres();
+        // Base de production : aucun jeu de demonstration n'est cree.
+        // Le compte maitre et le compte admin restent crees (et
+        // reinitialises) a chaque demarrage, sans quoi aucune connexion
+        // ne serait possible.
+        if (this.demoActive()) {
+            await this.seedUsers();
+            await this.seedServices();
+            await this.seedPersonnel();
+            await this.seedSallesEtLits();
+            await this.seedTypesExamen();
+            await this.seedTarifs();
+            await this.seedMedicaments();
+            await this.seedPatients();
+            await this.seedConsultations();
+            await this.seedUrgences();
+            await this.seedAdmissions();
+            await this.seedHospitalisations();
+            await this.seedDemandesExamen();
+            await this.seedExamensImagerie();
+            await this.seedOperations();
+            await this.seedFacturations();
+            await this.seedAssurances();
+            await this.seedGardes();
+            await this.seedRemunerations();
+            await this.seedContrats();
+            await this.seedDepenses();
+            await this.seedOrdonnances();
+            await this.seedSuivi();
+            await this.seedParametres();
 
-        Logger.info('SampleData', 'Donnees de demonstration chargees');
+            Logger.info('SampleData', 'Donnees de demonstration chargees');
+            return;
+        }
+
+        await this.ensureMaitre();
+        await this.ensureAdmin();
+        Logger.info('SampleData', 'Base initialisee sans donnees de demonstration (APP_CONFIG.SEED_DEMO = false).');
     },
 
     async seedUsers() {
@@ -871,6 +890,11 @@ const SampleData = {
                 await DB.put('users', admin);
             }
         }
+
+        // Un magasin vide ne doit PAS etre rempli automatiquement
+        // quand le jeu de demonstration est desactive : sinon la base
+        // se repeuple toute seule au demarrage suivant.
+        if (!this.demoActive()) return;
 
         const gardes = await DB.getAll('planningPersonnel');
         if (gardes.length === 0) await this.seedGardes();

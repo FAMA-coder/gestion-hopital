@@ -1,4 +1,4 @@
-# Gestion Hospitaliere
+﻿# Gestion Hospitaliere
 
 Application web de gestion complete d'un hopital moyen (HTML/CSS/JS vanilla + IndexedDB).
 
@@ -14,39 +14,41 @@ un serveur web local et ouvre automatiquement l'application dans votre navigateu
 Alternative manuelle : lancer un serveur statique a la racine du projet, par exemple :
 `python -m http.server 8080`, puis ouvrir `http://localhost:8080`.
 
-## Identifiants par defaut
+## Comptes et base de donnees
 
-Les mots de passe ne figure **plus en clair** dans les fichiers servis : chaque
-compte est stocke sous forme d'empreinte SHA-256 dans `js/config.js`
-(`COMPTES_DEMO`, et `GLOBAL_ADMIN` pour le compte maitre `FAMA`).
+La base est **vide** : `js/config.js` contient `SEED_DEMO: false`, donc
+l'application ne cree plus aucun patient, consultation, lit, service ni compte
+de demonstration. Elle cree uniquement :
 
-Les mots de passe de demonstration sont notes dans un fichier **local et non
-publie** : `build/mots-de-passe.txt` (le serveur local renvoie 403 sur `build/`,
-et le fichier est absent du depot Git). Ne pas le copier dans un depot ni le
-diffuser.
+| Utilisateur | Role | Origine |
+|-------------|------|---------|
+| FAMA | Compte maitre de la plateforme (bouton « COMPTE ADMIN » de l'ecran de demarrage) | `GLOBAL_ADMIN.passHash` |
+| admin | Administrateur de l'hopital | `COMPTES_DEMO.admin` |
 
-| Utilisateur | Role |
-|-------------|------|
-| FAMA | Compte maitre (bouton « COMPTE ADMIN » de l'ecran de demarrage) |
-| admin | Administrateur de l'hopital |
-| dr_mukendi, dr_kabila, dr_lukusa | Medecin |
-| dr_chirurgien | Chirurgien |
-| infirmier1 | Infirmier |
-| pharmacie | Pharmacien |
-| laboratoire | Laborantin |
-| radiologue | Radiologue |
-| caissier | Caissier |
-| secretaire | Secretaire |
-| directeur | Directeur (a creer manuellement dans Parametres -> Utilisateurs) |
+Ce sont les seuls comptes livres. Les autres utilisateurs se creent dans
+**Parametres -> Utilisateurs**, avec le mot de passe de leur choix.
 
-Les comptes crees dans Parametres -> Utilisateurs gardent le mot de passe choisi
-(mis en SHA-256 a la creation). Seul `admin` est reinitialise a son empreinte de
-configuration a chaque demarrage, pour garantir qu'un poste fraichement installe
-puisse se connecter.
+Aucun mot de passe n'est ecrit en clair dans les fichiers servis : chaque
+compte est stocke sous forme d'empreinte SHA-256 dans `js/config.js`. Les
+mots de passe sont notes dans un fichier **local et non publie** :
+`build/mots-de-passe.txt` (le serveur local repond 403 sur `build/`, et le
+fichier est absent du depot Git). Ne pas le copier dans un depot ni le diffuser.
 
-Pour changer un mot de passe de demonstration : remplacer l'empreinte dans
-`js/config.js` par `SHA-256 du nouveau mot de passe` (minuscules, 64 caracteres),
-puis relancer `Mettre-a-jour.bat` sur les postes installes.
+Deux consequences a garder en tete :
+
+- `admin` est **reinitialise** a son empreinte de configuration a chaque
+  demarrage : un mot de passe change dans Parametres -> Utilisateurs est donc
+  annule au redemarrage. C'est voulu, pour qu'un poste fraichement installe
+  puisse toujours se connecter. Les autres comptes, eux, conservent leur mot de
+  passe, et les anciens hachages 32 bits sont convertis en SHA-256 a la
+  premiere connexion.
+- Pour changer le mot de passe de `admin` : remplacer l'empreinte dans
+  `js/config.js` par `SHA-256 du nouveau mot de passe` (minuscules, 64
+  caracteres), puis relancer `Mettre-a-jour.bat` sur les postes installes.
+
+Pour recharger le jeu de demonstration (formation, essais) : mettre
+`SEED_DEMO: true` dans `js/config.js`, puis vider la base depuis
+**Parametres -> Donnees**.
 
 ## Modules
 

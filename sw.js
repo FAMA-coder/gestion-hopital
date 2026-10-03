@@ -1,9 +1,9 @@
-﻿/* ============================================================
-   sw.js — Service Worker (Gestion Hospitaliere)
+/* ============================================================
+   sw.js � Service Worker (Gestion Hospitaliere)
    Strategie : cache-first pour les ressources statiques (shell)
    + reseau en secours ; les donnees restent dans IndexedDB.
    ============================================================ */
-const VERSION = 'gesthopital-v15';
+const VERSION = 'gesthopital-v16';
 const PRECACHE = [
   './index.html',
   './manifest.json',
