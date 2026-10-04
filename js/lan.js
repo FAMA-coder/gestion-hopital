@@ -371,7 +371,13 @@ const LanSync = {
             return false;
         }
         const snap = await this.request('pull');
-        if (!snap || !snap.ok || !snap.data) return false;
+        // Le poste serveur renvoie l'image stockee telle quelle : cette
+        // enveloppe est celle poussee par le client d'origine
+        // ({ v, src, poste, data }) et ne comporte donc pas de champ
+        // « ok ». Exiger sa presence ferait ignorer toute image
+        // distante. Seul un « ok: false » explicite est un refus, et
+        // l'absence de donnees signale une image absente.
+        if (!snap || snap.ok === false || !snap.data) return false;
         if (!snap.src || snap.src === this.CID) return false; // notre propre image
         const v = Number(snap.v) || 0;
         if (!force && !(v > this.lastV)) return false;
