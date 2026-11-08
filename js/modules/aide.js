@@ -26,17 +26,6 @@ const aideModule = {
                 ]
             },
             {
-                nom: 'Admissions', icone: '&#9992;', couleur: 'info',
-                desc: 'Enregistrement des patients admis a l\'hopital.',
-                details: [
-                    'Creation d\'une admission : patient, type (urgence, consultation, hospitalisation, programmee), service, medecin et motif.',
-                    'Attribution automatique d\'un lit disponible lors de la creation.',
-                    'Modification integrale d\'une admission (patient, type, service, medecin, motif, dates, statut, motif de sortie).',
-                    'Suppression d\'une admission avec liberation du lit occupe.',
-                    'Recherche instantanee par nom de patient ou matricule.'
-                ]
-            },
-            {
                 nom: 'Patients', icone: '&#9787;', couleur: 'info',
                 desc: 'Registre central des patients.',
                 details: [
@@ -191,19 +180,10 @@ const aideModule = {
                     'Creation des factures avec lignes de prestations.',
                     'Calcul automatique des montants, taxes et restes a payer.',
                     'Enregistrement des assurances et de leur couverture.',
+                    'Encaissement des factures : especes, carte, virement, assurance ou mutuelle.',
+                    'Journal des encaissements, suivi des restes a payer et emission de quittances imprimables.',
                     'Impression des factures a remettre aux patients.',
                     'Les tickets d\'entree payes apparaissent comme factures de type "TicketEntree", deja soldees.'
-                ]
-            },
-            {
-                nom: 'Paiements', icone: '&#10003;', couleur: 'success',
-                desc: 'Encaissement des paiements.',
-                details: [
-                    'Journal des encaissements effectues.',
-                    'Choix du mode de paiement (especes, carte, virement, assurance, mutuelle).',
-                    'Emission de quittances imprimables.',
-                    'Suivi des restes a payer par facture.',
-                    'Les tickets d\'entree encaisses a la reception y sont enregistres avec leur service.'
                 ]
             },
             {
@@ -346,7 +326,7 @@ const aideModule = {
             ${section('Impression et documents', 'Plusieurs modules permettent de generer des documents imprimables.',
                 `<ul style="margin:0;padding-left:20px">
                     <li><strong>Consultations</strong> : bouton <strong>"Ticket"</strong> pour imprimer le billet de consultation.</li>
-                    <li><strong>Facturation</strong> et <strong>Paiements</strong> : impression des factures et quittances.</li>
+                    <li><strong>Facturation</strong> : impression des factures et des quittances d'encaissement.</li>
                     <li><strong>Documents</strong> : creation de documents texte imprimables et gestion de fichiers numeriques.</li>
                     <li>A l'impression, utilisez l'apercu du navigateur pour choisir la mise en page, les marges ou l'enregistrement en PDF.</li>
                 </ul>`)
@@ -354,7 +334,7 @@ const aideModule = {
 
             ${section('Recherche et filtres', 'Les listes de donnees sont filtrables pour retrouver rapidement un element.',
                 `<ul style="margin:0;padding-left:20px">
-                    <li>Dans <strong>Admissions</strong> et <strong>Pharmacie</strong>, saisissez un texte dans le champ de recherche : la liste se filtre instantanement pendant la frappe.</li>
+                    <li>Dans <strong>Receptions</strong> et <strong>Pharmacie</strong>, saisissez un texte dans le champ de recherche : la liste se filtre instantanement pendant la frappe.</li>
                     <li>Recherchez par nom, prenom ou matricule selon le module.</li>
                     <li>Utilisez la pagination en bas des listes pour parcourir les resultats.</li>
                 </ul>`)

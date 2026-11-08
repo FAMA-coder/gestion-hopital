@@ -53,22 +53,25 @@ Pour recharger le jeu de demonstration (formation, essais) : mettre
 ## Modules
 
 1. **Tableau de bord** - Statistiques, graphiques (admissions/consultations par mois, revenus, répartition services), occupation lits
-2. **Admissions** - Enregistrement des patients hospitalises
+2. **Receptions** - Accueil, enregistrement et orientation des patients (avec paiement du ticket d'entree)
 3. **Patients** - Dossiers patients complets
-4. **Consultations** - Suivi des consultations medicales
+4. **Consultations** - Gestion des consultations medicales : creation, modification, diagnostic, prescription et ticket imprimable
 5. **Urgences** - Triage et file d'attente des urgences
 6. **Hospitalisations** - Suivi avec observations quotidiennes (temp, TA, pouls, traitement)
-7. **Services & Lits** - Gestion des services et plan des lits
-8. **Pharmacie** - Stock, ordonnances detaillees (lignes medicaments), dispensation, alertes, entrees stock
-9. **Laboratoire** - Demandes d'examens et resultats
-10. **Imagerie** - Examens radiologiques et comptes-rendus
-11. **Chirurgie** - Interventions au bloc operatoire
-12. **Personnel** - Medecins, infirmiers, planning des gardes (jour/nuit avec detection de conflit), congés
-13. **Facturation** - Factures, encaissements, assurances, impression de facture
-14. **Paiements** - Journal des encaissements (par mode/date/caissier), nouvel encaissement, impression de quittance
-15. **Documents** - Documents imprimables (certificats, ordonnances, resultats, courriers, rapports) et fichiers numeriques (PDF/images) lies aux patients
-16. **Reporting** - Statistiques et export CSV
-17. **Parametres** - Configuration, logo hopital, utilisateurs, roles personnalisables, permissions par role, synchronisation, journal
+7. **Services & Lits** - Gestion des services, plan des lits et ticket d'entree par service
+8. **Tarifs** - Catalogue des tarifs par categorie et par service
+9. **Pharmacie** - Stock, ordonnances detaillees (lignes medicaments), dispensation, alertes, entrees stock
+10. **Laboratoire** - Demandes d'examens et resultats
+11. **Imagerie** - Examens radiologiques et comptes-rendus
+12. **Chirurgie** - Interventions au bloc operatoire
+13. **Personnel** - Medecins, infirmiers, planning des gardes (jour/nuit avec detection de conflit), congés
+14. **Salaires & Honoraires** - Remunerations du personnel
+15. **Contrats** - Contrats employes, prestataires et partenaires
+16. **Depenses** - Comptabilisation des depenses de l'hopital
+17. **Facturation** - Factures, encaissements, assurances, quittances et impression
+18. **Documents** - Documents imprimables (certificats, ordonnances, resultats, courriers, rapports) et fichiers numeriques (PDF/images) lies aux patients
+19. **Reporting** - Statistiques et export CSV
+20. **Parametres** - Configuration, logo hopital, utilisateurs, roles personnalisables, permissions par role, synchronisation, journal
 
 ## Fonctionnalites supplementaires
 
