@@ -182,7 +182,8 @@ const receptionsModule = {
         ];
 
         // Orientation vers un service (uniquement pour un nouveau patient)
-        if (!id) {
+        const isNew = !id;
+        if (isNew) {
             fields.push(
                 { type: 'section', label: 'Orientation aux services (facultatif)' },
                 { name: '_orienter', label: 'Orienter ce patient vers un service', type: 'select', options: [
@@ -194,15 +195,66 @@ const receptionsModule = {
         }
 
         const values = Object.assign({}, patient, orientation || {});
-        const formHtml = UI.buildForm(fields, values);
+        let formHtml = UI.buildForm(fields, values);
+        if (isNew) formHtml += this.ticketSectionHtml();
 
         UI.showModal(id ? 'Modifier Patient' : 'Nouveau Patient & Orientation', formHtml, `
             <button class="btn btn-outline" onclick="UI.hideModal()">Annuler</button>
             <button class="btn btn-primary" onclick="receptionsModule.save('${id || ''}')">Enregistrer</button>
+            ${isNew ? `<button class="btn btn-success" id="btn-payer-ticket" disabled onclick="receptionsModule.save('', true)">Payer le ticket d'entree</button>` : ''}
         `);
+
+        if (isNew) {
+            const sel = document.querySelector('.modal-body [name="_orienter"]');
+            if (sel) sel.addEventListener('change', () => this.refreshTicketEntree('_orienter', 'btn-payer-ticket'));
+            this.refreshTicketEntree('_orienter', 'btn-payer-ticket');
+        }
     },
 
-    async save(id) {
+    // Bloc commun "ticket d'entree" ajoute aux formulaires d'orientation.
+    ticketSectionHtml() {
+        return `
+            <div class="form-section-title">Ticket d'entree (paiement a l'orientation)</div>
+            <div class="form-row">
+                <div class="form-group full"><div id="ticket-entree-info"><p class="form-hint">Selectionnez un service pour afficher le montant du ticket d'entree.</p></div></div>
+                <div class="form-group">
+                    <label>Mode de paiement du ticket</label>
+                    <select name="_modeTicket">
+                        <option value="Especes">Especes</option>
+                        <option value="Carte">Carte</option>
+                        <option value="Virement">Virement</option>
+                        <option value="Assurance">Assurance</option>
+                        <option value="Mutuelle">Mutuelle</option>
+                    </select>
+                </div>
+            </div>`;
+    },
+
+    // Met a jour le montant affiche et l'etat du bouton de paiement.
+    async refreshTicketEntree(selectName, btnId) {
+        const sel = document.querySelector('.modal-body [name="' + selectName + '"]');
+        const info = document.getElementById('ticket-entree-info');
+        const btn = document.getElementById(btnId);
+        if (!sel || !info) return;
+        const serviceId = sel.value;
+        if (!serviceId) {
+            info.innerHTML = '<p class="form-hint">Selectionnez un service pour afficher le montant du ticket d\'entree.</p>';
+            if (btn) { btn.disabled = true; btn.textContent = 'Payer le ticket d\'entree'; }
+            return;
+        }
+        const tarif = await Billing.tarifTicketEntree(serviceId);
+        if (!tarif || !(Number(tarif.montant) > 0)) {
+            info.innerHTML = '<p class="form-hint" style="color:var(--warning)">Aucun ticket d\'entree defini pour ce service. Renseignez-le dans Services & Lits (champ Ticket d\'entree) ou dans Tarifs.</p>';
+            if (btn) { btn.disabled = true; btn.textContent = 'Payer le ticket d\'entree'; }
+            return;
+        }
+        info.innerHTML = `
+            <p style="margin:4px 0"><strong>Ticket d'entree :</strong> ${UI.formatMoney(tarif.montant)}</p>
+            <p style="margin:4px 0;color:var(--text-secondary);font-size:13px">Tarif : ${tarif.libelle || tarif.categorie}</p>`;
+        if (btn) { btn.disabled = false; btn.textContent = 'Payer le ticket (' + UI.formatMoney(tarif.montant) + ')'; }
+    },
+
+    async save(id, payTicket) {
         const form = document.querySelector('.modal-body');
         const data = UI.getFormData(form);
 
@@ -219,8 +271,10 @@ const receptionsModule = {
 
         const orienter = data._orienter;
         const orientation = { serviceId: data._orienter, type: data._typeOrientation || 'Consultation', motif: data._motifOrientation || '' };
-        delete data._orienter; delete data._typeOrientation; delete data._motifOrientation;
+        const modeTicket = data._modeTicket || 'Especes';
+        delete data._orienter; delete data._typeOrientation; delete data._motifOrientation; delete data._modeTicket;
 
+        let ticket = null;
         if (id) {
             const existing = await DB.get('patients', id);
             Object.assign(existing, data);
@@ -238,12 +292,14 @@ const receptionsModule = {
 
             if (orienter) {
                 await this.createOrientation(data, orientation);
+                if (payTicket) ticket = await this.payerTicketEntree(data, orientation.serviceId, modeTicket);
             }
         }
 
         Cache.invalidate('patients');
         UI.hideModal();
         this.renderList();
+        if (ticket) this.showTicketEntree(ticket.facture.id);
     },
 
     // ------------------------------------------------------------
@@ -284,30 +340,117 @@ const receptionsModule = {
         if (!patient) { UI.toast('Patient introuvable', 'error'); return; }
         const services = (await Meta.getServices()).filter(s => s.actif);
 
-        const formHtml = UI.buildForm([
+        let formHtml = UI.buildForm([
             { name: 'serviceId', label: 'Service de destination', type: 'select', required: true, options: services.map(s => ({ value: s.id, label: s.nom })) },
             { name: 'type', label: 'Type', type: 'select', options: this.ORIENTATION_TYPES },
             { name: 'motif', label: 'Motif', required: true, placeholder: 'Motif de l\'orientation' }
         ]);
+        formHtml += this.ticketSectionHtml();
 
         UI.showModal(`Orienter: ${patient.prenom} ${patient.nom}`, formHtml, `
             <button class="btn btn-outline" onclick="UI.hideModal()">Annuler</button>
             <button class="btn btn-primary" onclick="receptionsModule.saveOrientation('${patientId}')">Orienter</button>
+            <button class="btn btn-success" id="btn-payer-ticket" disabled onclick="receptionsModule.saveOrientation('${patientId}', true)">Payer le ticket d'entree</button>
         `);
+
+        const sel = document.querySelector('.modal-body [name="serviceId"]');
+        if (sel) sel.addEventListener('change', () => this.refreshTicketEntree('serviceId', 'btn-payer-ticket'));
+        this.refreshTicketEntree('serviceId', 'btn-payer-ticket');
     },
 
-    async saveOrientation(patientId) {
+    async saveOrientation(patientId, payTicket) {
         const patient = await DB.get('patients', patientId);
         if (!patient) return;
         const data = UI.getFormData(document.querySelector('.modal-body'));
+        const modeTicket = data._modeTicket || 'Especes';
         if (!data.serviceId || !data.motif) {
             UI.toast('Service et motif sont requis', 'error');
             return;
         }
         await this.createOrientation(patient, data);
+        let ticket = null;
+        if (payTicket) ticket = await this.payerTicketEntree(patient, data.serviceId, modeTicket);
         UI.toast('Patient oriente vers le service', 'success');
         UI.hideModal();
         this.renderList();
+        if (ticket) this.showTicketEntree(ticket.facture.id);
+    },
+
+    // ------------------------------------------------------------
+    // Ticket d'entree : encaissement + impression
+    // ------------------------------------------------------------
+    // Encaisse le ticket du service choisi selon le tarif predefini.
+    // Retourne { facture, paiement } ou null si aucun tarif n'est defini.
+    async payerTicketEntree(patient, serviceId, mode) {
+        if (!serviceId) { UI.toast('Selectionnez un service pour payer le ticket d\'entree', 'error'); return null; }
+        const services = await Meta.getServices();
+        const service = services.find(s => s.id === serviceId);
+        if (!service) { UI.toast('Service introuvable', 'error'); return null; }
+
+        const tarif = await Billing.tarifTicketEntree(serviceId);
+        if (!tarif || !(Number(tarif.montant) > 0)) {
+            UI.toast('Aucun ticket d\'entree defini pour ' + service.nom + '. Renseignez-le dans Services & Lits ou Tarifs.', 'error');
+            return null;
+        }
+
+        const res = await Billing.encaisserTicketEntree(patient.id, service, tarif, mode);
+        if (!res) { UI.toast('Echec de l\'encaissement du ticket', 'error'); return null; }
+        await Auth.log('Encaissement', 'receptions', 'Ticket entree ' + service.nom + ' - ' + UI.formatMoney(res.facture.montantTotal));
+        return res;
+    },
+
+    // Recapitulatif apres paiement, avec impression du ticket.
+    async showTicketEntree(factureId) {
+        const facture = await DB.get('factures', factureId);
+        if (!facture) return;
+        const [patients, services] = await Promise.all([DB.getAll('patients'), Meta.getServices()]);
+        const p = patients.find(x => x.id === facture.patientId);
+        const svc = services.find(s => s.id === facture.serviceId);
+        UI.showModal('Ticket d\'entree paye', `
+            <div class="form-group">
+                <p style="margin:4px 0"><strong>Patient :</strong> ${p ? p.prenom + ' ' + p.nom : facture.patientId}</p>
+                <p style="margin:4px 0"><strong>Service :</strong> ${svc ? svc.nom : '-'}</p>
+                <p style="margin:4px 0"><strong>Montant :</strong> ${UI.formatMoney(facture.montantTotal)}</p>
+                <p style="margin:4px 0"><strong>Mode :</strong> ${facture.modePaiement || '-'}</p>
+                <p style="margin:4px 0"><strong>N. ticket :</strong> ${facture.id.slice(-8).toUpperCase()}</p>
+            </div>
+        `, `
+            <button class="btn btn-outline" onclick="UI.hideModal()">Fermer</button>
+            <button class="btn btn-primary" onclick="UI.hideModal(); receptionsModule.printTicketEntree('${factureId}')">&#128424; Imprimer le ticket</button>
+        `);
+    },
+
+    async printTicketEntree(factureId) {
+        const facture = await DB.get('factures', factureId);
+        if (!facture) return;
+        const [patients, paiements, services, users] = await Promise.all([
+            DB.getAll('patients'), DB.getAll('paiements'), Meta.getServices(), DB.getAll('users')
+        ]);
+        const p = patients.find(x => x.id === facture.patientId);
+        const svc = services.find(s => s.id === facture.serviceId);
+        const paie = paiements.find(x => x.factureId === factureId);
+        const caissier = paie ? users.find(u => u.id === paie.caissierId) : null;
+        const hopital = await Meta.getHopital();
+
+        const body = `
+            <div class="print-title">TICKET D'ENTREE</div>
+            <table>
+                <tr><th>N. Ticket</th><td>${facture.id.slice(-8).toUpperCase()}</td><th>Date</th><td>${UI.formatDateTime(facture.date)}</td></tr>
+                <tr><th>Patient</th><td colspan="3">${p ? p.prenom + ' ' + p.nom : facture.patientId}${p && p.matricule ? ' (' + p.matricule + ')' : ''}</td></tr>
+                <tr><th>Service</th><td colspan="3">${svc ? svc.nom : '-'}</td></tr>
+                <tr><th>Mode de paiement</th><td>${facture.modePaiement || '-'}</td><th>Caissier</th><td>${caissier ? (caissier.nomComplet || caissier.nomUtilisateur) : 'Reception'}</td></tr>
+                <tr><th colspan="3" style="text-align:right">Montant paye</th><td class="print-total">${UI.formatMoney(facture.montantTotal)}</td></tr>
+            </table>
+            <div class="print-meta" style="margin-top:14px">
+                <p>Lieu : <strong>${hopital && hopital.nom ? hopital.nom : 'Hopital'}</strong></p>
+                <p>A presenter au service pour la prise en charge.</p>
+            </div>
+            <div class="print-sign">
+                <div><span class="line">Signature du caissier</span></div>
+                <div><span class="line">Visa du service</span></div>
+            </div>
+        `;
+        await Print.open('Ticket d\'entree - ' + (p ? p.nom : ''), body);
     },
 
     // ------------------------------------------------------------

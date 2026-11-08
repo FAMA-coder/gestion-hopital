@@ -21,6 +21,7 @@ const servicesModule = {
                     { field: 'nom', label: 'Nom', render: (v) => `<strong>${v}</strong>` },
                     { field: 'type', label: 'Type', render: (v) => UI.renderBadge(v, v === 'Chirurgical' ? 'danger' : v === 'Medico-technique' ? 'purple' : 'info') },
                     { field: 'localisation', label: 'Localisation', render: (v) => v || '-' },
+                    { label: 'Ticket d\'entree', render: (v, row) => Number(row.tarifEntree) > 0 ? `<strong>${UI.formatMoney(row.tarifEntree)}</strong>` : UI.renderBadge('Non defini', 'gray') },
                     { label: 'Lits (Total)', render: (v, row) => lits.filter(l => l.serviceId === row.id).length },
                     { label: 'Occupes', render: (v, row) => lits.filter(l => l.serviceId === row.id && l.statut === 'Occupe').length },
                     { label: 'Disponibles', render: (v, row) => lits.filter(l => l.serviceId === row.id && l.statut === 'Libre').length },
@@ -81,7 +82,8 @@ const servicesModule = {
             { name: 'type', label: 'Type', type: 'select', required: true, options: [
                 { value: 'Medical', label: 'Medical' }, { value: 'Chirurgical', label: 'Chirurgical' }, { value: 'Medico-technique', label: 'Medico-technique' }, { value: 'Administratif', label: 'Administratif' }
             ]},
-            { name: 'localisation', label: 'Localisation', placeholder: 'Batiment, etage...' }
+            { name: 'localisation', label: 'Localisation', placeholder: 'Batiment, etage...' },
+            { name: 'tarifEntree', label: 'Ticket d\'entree (FCFA)', type: 'number', min: 0, placeholder: '0 = non defini' }
         ]);
         UI.showModal('Nouveau Service', formHtml, `
             <button class="btn btn-outline" onclick="UI.hideModal()">Annuler</button>
@@ -94,6 +96,7 @@ const servicesModule = {
         const data = UI.getFormData(form);
         if (!data.nom) { UI.toast('Nom requis', 'error'); return; }
         data.id = DB.generateId();
+        data.tarifEntree = Number(data.tarifEntree) || 0;
         data.actif = true;
         await DB.put('services', data);
         Cache.invalidate('services');
@@ -111,6 +114,7 @@ const servicesModule = {
                 { value: 'Medical', label: 'Medical' }, { value: 'Chirurgical', label: 'Chirurgical' }, { value: 'Medico-technique', label: 'Medico-technique' }, { value: 'Administratif', label: 'Administratif' }
             ]},
             { name: 'localisation', label: 'Localisation', placeholder: 'Batiment, etage...' },
+            { name: 'tarifEntree', label: 'Ticket d\'entree (FCFA)', type: 'number', min: 0, placeholder: '0 = non defini' },
             { name: 'actif', label: 'Statut', type: 'select', options: [{ value: '1', label: 'Actif' }, { value: '0', label: 'Inactif' }] }
         ], Object.assign({}, svc, { actif: svc.actif ? '1' : '0' }));
         UI.showModal('Modifier le Service', formHtml, `
@@ -128,6 +132,7 @@ const servicesModule = {
         svc.nom = data.nom;
         svc.type = data.type;
         svc.localisation = data.localisation || '';
+        svc.tarifEntree = Number(data.tarifEntree) || 0;
         svc.actif = data.actif === '1' || data.actif === true;
         await DB.put('services', svc);
         Cache.invalidate('services');

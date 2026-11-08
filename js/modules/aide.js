@@ -15,6 +15,17 @@ const aideModule = {
                 ]
             },
             {
+                nom: 'Receptions', icone: '&#128100;', couleur: 'info',
+                desc: 'Accueil, enregistrement et orientation des patients.',
+                details: [
+                    'Enregistrement d\'un nouveau patient avec sa fiche complete (identite, contact, groupe sanguin, allergies).',
+                    'Orientation immediate vers un service (Consultation, Hospitalisation, Urgence, Laboratoire, Imagerie, etc.).',
+                    'Orientation d\'un patient deja enregistre vers un autre service.',
+                    'Paiement du ticket d\'entree au moment de l\'orientation, selon le tarif du service.',
+                    'Impression du ticket d\'entree (recepisse) apres paiement.'
+                ]
+            },
+            {
                 nom: 'Admissions', icone: '&#9992;', couleur: 'info',
                 desc: 'Enregistrement des patients admis a l\'hopital.',
                 details: [
@@ -72,7 +83,18 @@ const aideModule = {
                     'Creation, modification et suppression des services (actifs / inactifs).',
                     'Plan visuel des lits par service avec leur etat : libre, occupe, maintenance.',
                     'Bascule d\'un lit libre en maintenance et inversement.',
-                    'Suivi du taux d\'occupation et de disponibilite.'
+                    'Suivi du taux d\'occupation et de disponibilite.',
+                    'Champ "Ticket d\'entree" par service : montant applique lors de l\'orientation du patient.'
+                ]
+            },
+            {
+                nom: 'Tarifs', icone: '&#128181;', couleur: 'success',
+                desc: 'Catalogue des tarifs et prestations.',
+                details: [
+                    'Tarifs par categorie : Consultation, Examen, Imagerie, Hospitalisation, Chirurgie, Acte, Prestation et Ticket d\'entree.',
+                    'Rattachement facultatif d\'un tarif a un service precis.',
+                    'Activation / desactivation d\'un tarif et filtre par categorie ou par service.',
+                    'Le tarif "Ticket d\'entree" peut completer ou remplacer le montant saisi sur la fiche du service.'
                 ]
             },
             {
@@ -169,7 +191,8 @@ const aideModule = {
                     'Creation des factures avec lignes de prestations.',
                     'Calcul automatique des montants, taxes et restes a payer.',
                     'Enregistrement des assurances et de leur couverture.',
-                    'Impression des factures a remettre aux patients.'
+                    'Impression des factures a remettre aux patients.',
+                    'Les tickets d\'entree payes apparaissent comme factures de type "TicketEntree", deja soldees.'
                 ]
             },
             {
@@ -179,7 +202,8 @@ const aideModule = {
                     'Journal des encaissements effectues.',
                     'Choix du mode de paiement (especes, carte, virement, assurance, mutuelle).',
                     'Emission de quittances imprimables.',
-                    'Suivi des restes a payer par facture.'
+                    'Suivi des restes a payer par facture.',
+                    'Les tickets d\'entree encaisses a la reception y sont enregistres avec leur service.'
                 ]
             },
             {

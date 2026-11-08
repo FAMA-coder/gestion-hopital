@@ -15,8 +15,8 @@ const tarifsModule = {
         const tarifs = await DB.getAll('tarifs');
         const services = await DB.getAll('services');
         const getSvc = (id) => { const s = services.find(x => x.id === id); return id && s ? s.nom : 'Tous services'; };
-        const catLabel = { Consultation: 'Consultation', Examen: 'Examen', Imagerie: 'Imagerie', Hospitalisation: 'Hospitalisation', Chirurgie: 'Chirurgie', Acte: 'Acte', Prestation: 'Prestation' };
-        const catColor = { Consultation: 'info', Examen: 'purple', Imagerie: 'blue', Hospitalisation: 'warning', Chirurgie: 'danger', Acte: 'info', Prestation: 'gray' };
+        const catLabel = { Consultation: 'Consultation', Examen: 'Examen', Imagerie: 'Imagerie', Hospitalisation: 'Hospitalisation', Chirurgie: 'Chirurgie', Acte: 'Acte', Prestation: 'Prestation', 'Ticket d\'entree': 'Ticket d\'entree' };
+        const catColor = { Consultation: 'info', Examen: 'purple', Imagerie: 'info', Hospitalisation: 'warning', Chirurgie: 'danger', Acte: 'info', Prestation: 'gray', 'Ticket d\'entree': 'success' };
 
         const filtreCat = (c._filtreCat || '');
         const filtreSvc = (c._filtreSvc || '');

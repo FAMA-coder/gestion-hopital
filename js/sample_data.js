@@ -170,15 +170,15 @@ const SampleData = {
 
     async seedServices() {
         const services = [
-            { id: 'svc1', nom: 'Medecine Interne', type: 'Medical', chefServiceId: 'p1', localisation: 'Batiment A - Etage 1', actif: true },
-            { id: 'svc2', nom: 'Chirurgie Generale', type: 'Chirurgical', chefServiceId: 'p2', localisation: 'Batiment B - Etage 1', actif: true },
-            { id: 'svc3', nom: 'Pediatrie', type: 'Medical', chefServiceId: 'p3', localisation: 'Batiment A - Etage 2', actif: true },
-            { id: 'svc4', nom: 'Maternite', type: 'Medical', chefServiceId: 'p4', localisation: 'Batiment C - Etage 1', actif: true },
-            { id: 'svc5', nom: 'Urgences', type: 'Medical', chefServiceId: 'p5', localisation: 'Batiment D - Rez-de-chaussee', actif: true },
-            { id: 'svc6', nom: 'Laboratoire', type: 'Medico-technique', chefServiceId: 'p6', localisation: 'Batiment E - Etage 1', actif: true },
-            { id: 'svc7', nom: 'Imagerie Medicale', type: 'Medico-technique', chefServiceId: 'p7', localisation: 'Batiment E - Etage 2', actif: true },
-            { id: 'svc8', nom: 'Pharmacie', type: 'Medico-technique', chefServiceId: null, localisation: 'Batiment A - Rez-de-chaussee', actif: true },
-            { id: 'svc9', nom: 'Reanimation', type: 'Chirurgical', chefServiceId: 'p8', localisation: 'Batiment B - Etage 2', actif: true }
+            { id: 'svc1', nom: 'Medecine Interne', type: 'Medical', chefServiceId: 'p1', localisation: 'Batiment A - Etage 1', tarifEntree: 5000, actif: true },
+            { id: 'svc2', nom: 'Chirurgie Generale', type: 'Chirurgical', chefServiceId: 'p2', localisation: 'Batiment B - Etage 1', tarifEntree: 10000, actif: true },
+            { id: 'svc3', nom: 'Pediatrie', type: 'Medical', chefServiceId: 'p3', localisation: 'Batiment A - Etage 2', tarifEntree: 5000, actif: true },
+            { id: 'svc4', nom: 'Maternite', type: 'Medical', chefServiceId: 'p4', localisation: 'Batiment C - Etage 1', tarifEntree: 5000, actif: true },
+            { id: 'svc5', nom: 'Urgences', type: 'Medical', chefServiceId: 'p5', localisation: 'Batiment D - Rez-de-chaussee', tarifEntree: 10000, actif: true },
+            { id: 'svc6', nom: 'Laboratoire', type: 'Medico-technique', chefServiceId: 'p6', localisation: 'Batiment E - Etage 1', tarifEntree: 2000, actif: true },
+            { id: 'svc7', nom: 'Imagerie Medicale', type: 'Medico-technique', chefServiceId: 'p7', localisation: 'Batiment E - Etage 2', tarifEntree: 3000, actif: true },
+            { id: 'svc8', nom: 'Pharmacie', type: 'Medico-technique', chefServiceId: null, localisation: 'Batiment A - Rez-de-chaussee', tarifEntree: 0, actif: true },
+            { id: 'svc9', nom: 'Reanimation', type: 'Chirurgical', chefServiceId: 'p8', localisation: 'Batiment B - Etage 2', tarifEntree: 20000, actif: true }
         ];
         await DB.putAll('services', services);
     },
